@@ -1,15 +1,16 @@
 ---
-import "@/styles/global.css";
-import SeoHead from "@/components/SeoHead.astro";
-import Navbar from "@/components/global/Navbar.astro";
-import Footer from "@/components/global/Footer.astro";
-
 import {
   ORGANIZATION_SCHEMA,
   WEBSITE_SCHEMA,
   type JSONLDSchema,
 } from "@/config/seo";
 import type { SEOProps } from "astro-seo";
+import { Font } from "astro:assets";
+import "@/styles/global.css";
+
+import SeoHead from "@/components/SeoHead.astro";
+import Navbar from "@/components/global/Navbar.astro";
+import Footer from "@/components/global/Footer.astro";
 
 interface Props {
   seoProps: SEOProps;
@@ -22,20 +23,25 @@ const allSchemas = [...schemas, ORGANIZATION_SCHEMA, WEBSITE_SCHEMA];
 ---
 
 <!doctype html>
-<html lang="en" class="scrollbar-hide overflow-x-hidden">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+<html lang="es-CO" class="scrollbar-hide overflow-x-hidden">
+  <!-- SEO Head -->
+  <SeoHead seoProps={seoProps} schemas={allSchemas} />
 
-    <!-- SEO Head -->
-    <SeoHead seoProps={seoProps} schemas={allSchemas} />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" />
 
-    <script>
-      import "@/utils/scripts/lennis.js";
-    </script>
-  </head>
+  <!-- Fonts -->
+  <Font cssVariable="--font-jakarta" />
+  <Font cssVariable="--font-nunito" />
+
+  <!-- SiteMap -->
+  <link rel="sitemap" href="/sitemap-index.xml" />
+
+  <script>
+    import "@/utils/scripts/lennis.js";
+  </script>
 
   <body>
     <Navbar />

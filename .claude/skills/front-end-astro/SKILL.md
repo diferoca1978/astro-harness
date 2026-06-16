@@ -1,6 +1,6 @@
 ---
 name: front-end-astro
-description: Create distinctive, production-grade Astro components and pages using HTML and Tailwind CSS. Use this skill when working with Astro projects to build web components, landing pages, sections, or UI elements. This skill specializes in Astro's component syntax (.astro files) with HTML structure and Tailwind CSS styling only - NO React, Vue, Solid, or Preact frameworks. Always reads CLAUDE.md for project context before starting work.
+description: Create distinctive, production-grade Astro components and pages using HTML and Tailwind CSS. Use this skill when working with Astro projects to build web components, landing pages, sections, or UI elements. This skill specializes in Astro's component syntax (.astro files) with HTML structure and Tailwind CSS styling only - NO React, Vue, Solid, or Preact frameworks. Always reads AGENTS.md for project context before starting work.
 ---
 
 Produce real, working Astro components with exceptional attention to aesthetic details. Avoid generic "AI slop" aesthetics.
@@ -11,7 +11,8 @@ Produce real, working Astro components with exceptional attention to aesthetic d
 
 Read the following files to understand the project before writing any code:
 
-1. `CLAUDE.md` — project overview, component conventions, path aliases, tech stack
+1. `AGENTS.md` — project overview, component conventions, path aliases, tech stack
+   (the repo's `CLAUDE.md` is just a pointer to `AGENTS.md`)
 2. `src/styles/global.css` — color palette (CSS custom properties, `@theme`), typography tokens, base styles
 3. `package.json` — confirm GSAP and other relevant dependencies are installed
 
@@ -45,7 +46,7 @@ Implement Astro components (.astro files) that are:
 - **NO inline styles**: NEVER use `style=""` attributes on any element. All styling must be done exclusively via Tailwind CSS utility classes.
 - **NO arbitrary values**: NEVER use `h-[220px]` arbitrary values on any utitility class.
 - **NO animations**: If GSAP is installed in the project, do NOT add animations — these are handled in separate utility files
-- **Respect project structure**: Follow component organization from CLAUDE.md (global/, landing/, perPage/, ui/)
+- **Respect project structure**: Follow component organization from AGENTS.md (global/, perpage/<page>/, ui/<category>/ — there is no landing/ folder)
 - **Tailwind CSS v4 gradient syntax**: NEVER use `bg-gradient-to-*` (deprecated v3 syntax). ALWAYS use `bg-linear-to-*` instead. Examples: `bg-linear-to-br`, `bg-linear-to-r`, `bg-linear-to-t`. This applies to all gradient direction utilities.
 - **Images via Astro Image component**: ALWAYS use `<Image />` (or `<Picture />`) imported from `astro:assets` for every image. NEVER use a raw `<img>` tag. This enforces Astro's built-in image optimization (format conversion, lazy loading, correct dimensions). The `alt` attribute is required on every `<Image />`.
 - **SVG icons - NO inline SVGs**: NEVER write inline `<svg>` markup directly in components. ALWAYS import SVG files from the assets directory and use them as components. Example: `import arrowIcon from "@/assets/icons/arrow.svg"` then use as `<arrowIcon class="h-6 w-6" />`. This keeps components clean, enables SVG reuse, and allows for proper optimization. If an SVG asset doesn't exist, create it and put it into `@/assets/icons/`, but DO NOT create inline SVG markup.

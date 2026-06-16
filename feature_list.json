@@ -1,0 +1,7 @@
+{
+  "_doc": "Generated per client during brief ingestion. Each entry: { id, status, builders, nota }.",
+  "_status": "pending | in_progress | done — only ONE feature may be in_progress at a time.",
+  "_builders": "subset of [front-end-astro, seo-guide-lines]. Sections -> front-end-astro; close each page with seo-guide-lines.",
+  "client": null,
+  "features": []
+}
