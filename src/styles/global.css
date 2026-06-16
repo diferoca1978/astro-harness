@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: var(--color-soft-bg);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-jakarta);
+  }
+
+  p,
+  button,
+  a,
+  li {
+    font-family: var(--font-nunito);
+  }
+
+  /* Prevent browser autofill from overriding custom styles */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:active {
+    /* Force transparent/dark background using box-shadow trick */
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    box-shadow: 0 0 0 1000px transparent inset !important;
+
+    /* Force light text color for dark forms */
+    -webkit-text-fill-color: var(--color-purple-accent) !important;
+    color: var(--color-purple-accent) !important;
+
+    /* Prevent background color transition (effectively disables browser styling) */
+    transition:
+      background-color 5000s ease-in-out 0s,
+      color 5000s ease-in-out 0s !important;
+
+    /* Preserve borders and other properties */
+    border-color: var(--color-soft-bg) !important;
+    background-color: transparent !important;
+  }
+
+  /* Firefox autofill override */
+  input:-moz-autofill,
+  textarea:-moz-autofill,
+  select:-moz-autofill {
+    background-color: transparent !important;
+    color: var(--color-purple-accent) !important;
+    border-color: var(--color-purple-accent) !important;
+    filter: none !important;
+  }
+}
+
+@theme inline {
+  --color-soft-bg: oklch(1 0 0);
+  --color-soft-beige: oklch(0.9655 0.0119 101.48);
+  --color-purple-accent: oklch(46.2% 0.066 315);
+  --color-purple-dark: oklch(36.9% 0.051 316);
+  --color-gray-lavender: oklch(67.3% 0.061 316);
+  --color-blue-mist: oklch(83.2% 0.035 255);
+  --color-olive: oklch(83.8% 0.075 111);
+
+  --font-jakarta: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-nunito: "Nunito", system-ui, sans-serif;
+}

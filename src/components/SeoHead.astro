@@ -1,0 +1,33 @@
+---
+/**
+ * SEOHead Component
+ * Centralizes SEO meta tags and JSON-LD schemas injection
+ *
+ * Usage:
+ * <SEOHead
+ *   seoProps={seoData}
+ *   schemas={[ORGANIZATION_SCHEMA, breadcrumbSchema, faqSchema]}
+ * />
+ */
+
+import { SEO } from "astro-seo";
+import type { SEOProps } from "astro-seo";
+import type { JSONLDSchema } from "@/config/seo";
+
+interface Props {
+  seoProps: SEOProps;
+  schemas?: JSONLDSchema[];
+}
+
+const { seoProps, schemas = [] } = Astro.props;
+---
+
+<!-- SEO Meta Tags -->
+<SEO {...seoProps} />
+
+<!-- JSON-LD Structured Data -->
+{
+  schemas.map((schema) => (
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  ))
+}

@@ -1,0 +1,22 @@
+---
+import { COMPANY_INFO } from "@/config/seo";
+import Whatsapp from "@/assets/icons/whatsApp.svg";
+---
+
+<a
+  href={COMPANY_INFO.socialMedia.whatsapp}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="group flex h-14 w-14 items-center justify-center transition-all duration-300 hover:scale-105"
+>
+  <Whatsapp class="h-full w-full" />
+  <span class="sr-only">WhatsApp</span>
+  <div
+    class="invisible absolute top-1/2 right-14 mr-2 flex -translate-y-1/2 items-center justify-center lg:group-hover:visible"
+  >
+    <span
+      class="rounded-lg bg-amber-600/80 p-2 text-sm whitespace-nowrap text-stone-50 backdrop-blur-sm group-hover:ring-2 group-hover:ring-stone-100/50"
+      >¿Necesitas asesoría profesional?</span
+    >
+  </div>
+</a>

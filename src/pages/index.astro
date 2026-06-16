@@ -1,0 +1,15 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import Hero from "@/components/perpage/home/Hero.astro";
+import { generateDynamicSEO } from "@/config/seo";
+
+const homeSeo = generateDynamicSEO({
+  pageType: "home",
+  title: "Home - My Website",
+  description: "Welcome to my website. Explore our content and services.",
+});
+---
+
+<MainLayout seoProps={homeSeo}>
+  <Hero />
+</MainLayout>

@@ -1,0 +1,65 @@
+---
+import "@/styles/global.css";
+import SeoHead from "@/components/SeoHead.astro";
+import Navbar from "@/components/global/Navbar.astro";
+import Footer from "@/components/global/Footer.astro";
+
+import {
+  ORGANIZATION_SCHEMA,
+  WEBSITE_SCHEMA,
+  type JSONLDSchema,
+} from "@/config/seo";
+import type { SEOProps } from "astro-seo";
+
+interface Props {
+  seoProps: SEOProps;
+  schemas?: JSONLDSchema[];
+}
+
+const { seoProps, schemas = [] } = Astro.props;
+
+const allSchemas = [...schemas, ORGANIZATION_SCHEMA, WEBSITE_SCHEMA];
+---
+
+<!doctype html>
+<html lang="en" class="scrollbar-hide overflow-x-hidden">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!-- SEO Head -->
+    <SeoHead seoProps={seoProps} schemas={allSchemas} />
+
+    <script>
+      import "@/utils/scripts/lennis.js";
+    </script>
+  </head>
+
+  <body>
+    <Navbar />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
