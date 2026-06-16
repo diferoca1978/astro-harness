@@ -182,5 +182,74 @@ duplicating their rules.
 - No inline `style=""`, no arbitrary values (`h-[220px]`).
 - Tailwind 4 gradients: `bg-linear-to-*` (never the v3 `bg-gradient-to-*`).
 - GSAP animations live in `src/utils/scripts/animations/` — do **not** add
-  animations inside components.
+  animations inside components. Every timeline **must** respect
+  `prefers-reduced-motion` via `gsap.matchMedia()` — the `reduce` branch sets
+  elements to their final, visible state (`autoAlpha: 1`) so content is never
+  left hidden. See the `front-end-astro` skill for the canonical pattern.
+- CSS/Tailwind motion must degrade with the `motion-reduce:` variant.
 - Exactly one `<h1>` per page (it is the page's primary entity/keyword).
+
+---
+
+## Evolving the scaffold
+
+The scaffold is meant to grow (add Resend/Actions, swap the animation library,
+add page types…). One rule keeps the harness honest:
+
+> **This file and the skills are read as truth.** When you change
+> infrastructure, update the contract **in the same change** — never leave docs
+> stale "for later". `pnpm verify` checks the *code*; it does **not** check
+> whether this file or the skills are still accurate. That is on you.
+
+### If you change X → update Y
+
+| If you… | Update… |
+|---|---|
+| Add a dependency / remove one | `package.json` · **Tech stack** above |
+| Add server Actions + an email service (e.g. Resend) | `astro.config.mjs` `env.schema` · `src/actions/` · `prerender = false` on the page · **Tech stack** · **Architecture** · remove the "no server actions / no email" warning at the top · add the API key + recipient to the **Knobs map** + `client-gaps.md` |
+| Swap the animation library (e.g. remove GSAP) | the scripts in `src/utils/scripts/animations/` · **Tech stack** + **Conventions** here · **and** `.claude/skills/front-end-astro/SKILL.md`, which **names GSAP by hand** and branches on it (the "if GSAP installed…" motion rules) |
+| Add/rename a config file in `src/config/` | **Config** section · **Knobs map** |
+| Add a new font slot | the 3 font files (see Knobs map) |
+| Change folder conventions | **Components** section · the structure note in `front-end-astro` SKILL.md |
+
+> **Gotcha:** the `front-end-astro` skill hardcodes the word **GSAP** and decides
+> whether to add CSS animations based on its presence. Removing GSAP without
+> editing that skill will leave it telling agents the wrong thing.
+
+### Scaffold-level vs per-client
+
+- **Standard for every client** (e.g. you always use Resend) → make the change in
+  the **scaffold** (this repo) so it propagates to every future clone.
+- **One client only** → make it in the **client repo**; that client's `AGENTS.md`
+  legitimately diverges from the base. Do **not** push client-specific
+  infrastructure back into the boilerplate.
+
+After any such change, run `pnpm verify` and confirm this file still matches
+reality before committing.
+
+---
+
+## External skills — GSAP
+
+The official GreenSock skills are installed (vanilla subset only):
+`gsap-core`, `gsap-timeline`, `gsap-scrolltrigger`, `gsap-plugins`,
+`gsap-utils`, `gsap-performance`. They teach **how** to write correct GSAP and
+are the reference for animation code.
+
+`gsap-react` and `gsap-frameworks` are **deliberately not installed** — this
+scaffold is vanilla (no React/Vue/Svelte). Do not reach for `useGSAP` or any
+framework-specific GSAP API.
+
+**This file overrides the GSAP skills where they differ.** The skills inform
+technique; the harness owns placement and accessibility:
+
+- **Where**: all GSAP lives in `src/utils/scripts/animations/`, never inside
+  components, never in a framework.
+- **Reduced motion is mandatory**: every timeline must be wrapped in
+  `gsap.matchMedia()` with a `prefers-reduced-motion: reduce` branch that lands
+  elements in their final, visible state (`autoAlpha: 1`). `gsap-core` documents
+  `matchMedia`; the harness makes it a hard requirement (also in `CHECKPOINTS.md`
+  and the `front-end-astro` skill).
+- **Division of labor**: `front-end-astro` builds the markup (no animation) →
+  the `gsap-*` skills inform the animation written in the utils file → this
+  contract dictates where it goes and that it respects reduced motion.

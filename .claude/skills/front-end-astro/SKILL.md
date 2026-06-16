@@ -51,13 +51,48 @@ Implement Astro components (.astro files) that are:
 - **Images via Astro Image component**: ALWAYS use `<Image />` (or `<Picture />`) imported from `astro:assets` for every image. NEVER use a raw `<img>` tag. This enforces Astro's built-in image optimization (format conversion, lazy loading, correct dimensions). The `alt` attribute is required on every `<Image />`.
 - **SVG icons - NO inline SVGs**: NEVER write inline `<svg>` markup directly in components. ALWAYS import SVG files from the assets directory and use them as components. Example: `import arrowIcon from "@/assets/icons/arrow.svg"` then use as `<arrowIcon class="h-6 w-6" />`. This keeps components clean, enables SVG reuse, and allows for proper optimization. If an SVG asset doesn't exist, create it and put it into `@/assets/icons/`, but DO NOT create inline SVG markup.
 
+## Accessibility — motion must respect `prefers-reduced-motion`
+
+Every animation in this project must degrade gracefully for users who request
+reduced motion. This is **non-negotiable** and applies to both motion paths:
+
+**CSS / Tailwind motion** (transitions, hover, transforms you add directly):
+gate or disable it with Tailwind's `motion-reduce:` variant, e.g.
+`transition-transform motion-reduce:transition-none` or
+`motion-reduce:transform-none`. Never convey meaning through motion alone, and
+make sure the element's resting/visible state is correct without any animation.
+
+**GSAP** (authored separately in `src/utils/scripts/animations/`, never inside
+components): every timeline MUST be wrapped in `gsap.matchMedia()` with an
+explicit reduced-motion branch that lands elements in their final, **visible**
+state — so content is never left mid-animation or hidden (`autoAlpha: 0`) for
+these users. Canonical pattern:
+
+```js
+const mm = gsap.matchMedia();
+
+// Reduced motion: skip the animation, show the final state immediately.
+mm.add("(prefers-reduced-motion: reduce)", () => {
+  gsap.set([heading, subtitle, cta], { autoAlpha: 1 });
+});
+
+// Full motion: build the entrance timeline here.
+mm.add("(prefers-reduced-motion: no-preference)", () => {
+  // gsap.timeline()… your animation
+});
+```
+
+Key rule: if your animation starts elements at `autoAlpha: 0` / offscreen, the
+`reduce` branch is what guarantees they become visible. Omitting it leaves
+reduced-motion users staring at invisible content.
+
 ## Frontend Aesthetics Guidelines
 
 Focus on:
 
 - **Typography**: FIRST read `src/styles/global.css` to understand existing font families and typography system. Use the project's established fonts and type scale. Never use redundant utility classes on text tags if these are set in `src/styles/global.css` (@layer base {}) object. Only suggest new fonts if the project lacks a clear typography system. Avoid generic fonts like Arial and Inter; prefer distinctive choices that match the project's aesthetic direction.
 - **Color & Theme**: FIRST read `src/styles/global.css` to understand the existing color palette, CSS custom properties, and theme system. Use the project's established colors and design tokens. Build components that align with the existing aesthetic direction. Only suggest new colors if they complement the established palette or if no theme exists.
-- **Motion**: ONLY if GSAP is NOT installed - use tailwind CSS animations/transitions for micro-interactions. If GSAP is present, skip animations entirely (handled separately). Focus on TailwindCSS hover states, transitions, and transforms.
+- **Motion**: ONLY if GSAP is NOT installed - use tailwind CSS animations/transitions for micro-interactions. If GSAP is present, skip animations entirely (handled separately). Focus on TailwindCSS hover states, transitions, and transforms. **Any CSS motion you add must respect reduced motion** — see the Accessibility section below.
 - **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density. Leverage Tailwind's grid and flexbox utilities.
 - **Backgrounds & Visual Details**: Create atmosphere and depth with Tailwind gradient utilities, background patterns, shadows, borders. Use backdrop-blur, opacity layers, and decorative SVG elements.
 
