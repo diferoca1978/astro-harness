@@ -79,9 +79,12 @@ Read: package.json
 
 ### Step 1: Understand Context
 
-First, read the SEO guide to understand the project architecture:
+First, read `AGENTS.md` for the project's conventions and harness contract (the
+repo's `CLAUDE.md` is just a pointer to it), then the SEO guide to understand the
+project architecture:
 
 ```bash
+Read: AGENTS.md
 Read: seo-guide-line.md
 ```
 

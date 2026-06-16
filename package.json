@@ -6,7 +6,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "verify": "bash ./init.sh",
+    "lint:client": "bash ./harness/lint-customization.sh"
   },
   "dependencies": {
     "@astrojs/netlify": "^7.0.13",
@@ -22,8 +25,10 @@
     "tailwindcss": "^4.3.1"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "prettier": "^3.8.4",
     "prettier-plugin-astro": "^0.14.1",
-    "prettier-plugin-tailwindcss": "^0.8.0"
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript": "^6.0.3"
   }
 }
