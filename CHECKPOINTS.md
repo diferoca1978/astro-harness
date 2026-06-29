@@ -23,6 +23,9 @@ SKILL.md is authoritative for its column.
 - [ ] Gradients use `bg-linear-to-*` (Tailwind 4), never `bg-gradient-to-*`.
 - [ ] No animations inside the component (GSAP lives in
       `src/utils/scripts/animations/`).
+- [ ] Motion respects `prefers-reduced-motion`: GSAP timelines wrapped in
+      `gsap.matchMedia()` (reduce branch shows the final visible state); CSS
+      motion uses the `motion-reduce:` variant.
 - [ ] Responsive (mobile-first); tap targets and base font legible on mobile.
 
 ## SEO / content — owned by `seo-guide-lines` (page-level)
@@ -38,4 +41,4 @@ SKILL.md is authoritative for its column.
 ## Done
 
 - [ ] `feature_list.json` updated → `status: "done"`.
-- [ ] One line appended to `progress/history.md`.
+- [ ] Work committed — the git log is the build log (no `progress/` journal).
