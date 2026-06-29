@@ -137,12 +137,26 @@ The whole point of the scaffold is this boundary.
    Route each feature to its builder skill (below), construct it against
    `config/*` + the brief, never hardcode data.
 4. **Verify** → `pnpm verify` (build + astro check + customization lint).
-5. **Mark done** → update `feature_list.json` and append a line to
-   `progress/history.md`.
+5. **Mark done** → set the feature to `status: "done"` in `feature_list.json`
+   and commit (the git log is the build log — see *Where state & memory live*).
 
 If a feature needs data that is still in `client-gaps.md`, **ask for it before
 building** — do not silently invent it. A marked placeholder is acceptable only
 if explicitly chosen; the customization lint will flag it.
+
+### Where state & memory live (no `progress/` files)
+
+The harness keeps **no** in-repo progress journal. Three stores divide the job —
+do **not** recreate a `progress/` folder:
+
+- **`feature_list.json`** — the in-repo build *state*: every feature and its
+  `status` (`pending` / `in_progress` / `done`, only one `in_progress`). The
+  authoritative queue; travels with the clone.
+- **git history** — the durable, in-repo *completion log*. One feature ≈ one
+  commit, so `git log` answers "what was built, when" with no hand-kept file.
+- **Engram** (agent memory) — the cross-session *narrative*: decisions, why an
+  approach was chosen, gotchas. Project-scoped, lives in the agent's memory (not
+  the repo); surfaced with `mem_search` / `mem_context`.
 
 ### Skill routing — the two builders work at different altitudes
 

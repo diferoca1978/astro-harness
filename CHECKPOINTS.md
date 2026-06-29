@@ -41,4 +41,4 @@ SKILL.md is authoritative for its column.
 ## Done
 
 - [ ] `feature_list.json` updated → `status: "done"`.
-- [ ] One line appended to `progress/history.md`.
+- [ ] Work committed — the git log is the build log (no `progress/` journal).
