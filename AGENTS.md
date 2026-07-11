@@ -5,7 +5,7 @@ and `seo-guide-lines` skills — when working in this repository. This is the
 single, agent-agnostic source of truth (`CLAUDE.md` is just a pointer here).
 
 > **This repo is a boilerplate (scaffold).** It is cloned once per client (via
-> the provisioning script) and then *dressed* to that client's brand and
+> the provisioning script) and then _dressed_ to that client's brand and
 > content. Before changing anything, read **Invariant vs Variable** below: it
 > tells you what is the fixed skeleton (never edit per client) and what are the
 > per-client knobs (edited every time).
@@ -92,31 +92,32 @@ if it builds and type-checks, most breakage is already excluded.
 
 The whole point of the scaffold is this boundary.
 
-| | **Invariant** (skeleton — do not edit per client) | **Variable** (per-client knobs) |
-|---|---|---|
-| **What** | Folder structure, component contracts, SEO machinery (`SeoHead`, astro-seo, JSON-LD generators), `robots.txt.ts`, build/verify tooling, conventions | Brand tokens, page content, which pages/sections exist, company data, language |
-| **Where** | `layouts/`, `SeoHead.astro`, generator logic in `config/seo.ts`, `src/utils/scripts/`, `init.sh`, this file's conventions | `global.css @theme`, `config/*` data, `navigation.ts`, `MainLayout` `lang`, `src/pages/*`, `src/contentBlogs/` |
-| **Filled** | Once, in the scaffold | Every client, from the brief |
+|            | **Invariant** (skeleton — do not edit per client)                                                                                                   | **Variable** (per-client knobs)                                                                                |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **What**   | Folder structure, component contracts, SEO machinery (`SeoHead`, astro-seo, JSON-LD generators), `robots.txt.ts`, build/verify tooling, conventions | Brand tokens, page content, which pages/sections exist, company data, language                                 |
+| **Where**  | `layouts/`, `SeoHead.astro`, generator logic in `config/seo.ts`, `src/utils/scripts/`, `init.sh`, this file's conventions                           | `global.css @theme`, `config/*` data, `navigation.ts`, `MainLayout` `lang`, `src/pages/*`, `src/contentBlogs/` |
+| **Filled** | Once, in the scaffold                                                                                                                               | Every client, from the brief                                                                                   |
 
 ### Knobs map — one home per per-client thing (never duplicate)
 
-| Knob | Its home(s) | Source |
-|---|---|---|
-| Colors (visual tokens) | `src/styles/global.css` → `@theme` (only) | Brand guide / logo (NOT the content brief) |
-| Fonts | **3 files** (Astro Fonts API): `astro.config.mjs` `fonts[]` (`name` + `provider`) · `src/styles/global.css` `@theme` (`--font-*` family) · `src/layouts/MainLayout.astro` `<Font cssVariable>` | Brand guide |
-| Company data (name, phone, email, social, url) | `src/config/seo.ts` → `COMPANY_INFO` | Brief + `client-gaps.md` |
-| Services / specialties | `src/config/services.ts` | Brief |
-| FAQs | `src/config/faqs.ts` | Brief |
-| Author / credentials | `src/config/authorBio.ts` | Brief |
-| Navigation | `src/utils/navigation.ts` | Brief (§ nav spec) |
-| `lang` / locale | `src/layouts/MainLayout.astro` (`<html lang>`) | Default `es-CO` |
-| Pages | `src/pages/*.astro` | Brief (§ sitemap) |
+| Knob                                           | Its home(s)                                                                                                                                                                                    | Source                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Colors (visual tokens)                         | `src/styles/global.css` → `@theme` (only)                                                                                                                                                      | Brand guide / logo (NOT the content brief) |
+| Fonts                                          | **3 files** (Astro Fonts API): `astro.config.mjs` `fonts[]` (`name` + `provider`) · `src/styles/global.css` `@theme` (`--font-*` family) · `src/layouts/MainLayout.astro` `<Font cssVariable>` | Brand guide                                |
+| Company data (name, phone, email, social, url) | `src/config/seo.ts` → `COMPANY_INFO`                                                                                                                                                           | Brief + `client-gaps.md`                   |
+| Services / specialties                         | `src/config/services.ts`                                                                                                                                                                       | Brief                                      |
+| FAQs                                           | `src/config/faqs.ts`                                                                                                                                                                           | Brief                                      |
+| Author / credentials                           | `src/config/authorBio.ts`                                                                                                                                                                      | Brief                                      |
+| Navigation                                     | `src/utils/navigation.ts`                                                                                                                                                                      | Brief (§ nav spec)                         |
+| `lang` / locale                                | `src/layouts/MainLayout.astro` (`<html lang>`)                                                                                                                                                 | Default `es-CO`                            |
+| Pages                                          | `src/pages/*.astro`                                                                                                                                                                            | Brief (§ sitemap)                          |
 
 > **Colors** live **only** in `global.css` because Tailwind 4 reads them there
 > to generate utilities. Never mirror colors into a `.ts` file — that creates
 > drift.
 >
 > **Fonts** are a 3-file knob (the Astro Fonts API spreads the definition):
+>
 > - **Swap** a font in an existing slot (heading/body) → edit `astro.config.mjs`
 >   (`name` + `provider`) **and** the `--font-*` family in `global.css`.
 >   `MainLayout` does **not** change (the `cssVariable` is unchanged).
@@ -138,7 +139,7 @@ The whole point of the scaffold is this boundary.
    `config/*` + the brief, never hardcode data.
 4. **Verify** → `pnpm verify` (build + astro check + customization lint).
 5. **Mark done** → set the feature to `status: "done"` in `feature_list.json`
-   and commit (the git log is the build log — see *Where state & memory live*).
+   and commit (the git log is the build log — see _Where state & memory live_).
 
 If a feature needs data that is still in `client-gaps.md`, **ask for it before
 building** — do not silently invent it. A marked placeholder is acceptable only
@@ -149,12 +150,12 @@ if explicitly chosen; the customization lint will flag it.
 The harness keeps **no** in-repo progress journal. Three stores divide the job —
 do **not** recreate a `progress/` folder:
 
-- **`feature_list.json`** — the in-repo build *state*: every feature and its
+- **`feature_list.json`** — the in-repo build _state_: every feature and its
   `status` (`pending` / `in_progress` / `done`, only one `in_progress`). The
   authoritative queue; travels with the clone.
-- **git history** — the durable, in-repo *completion log*. One feature ≈ one
+- **git history** — the durable, in-repo _completion log_. One feature ≈ one
   commit, so `git log` answers "what was built, when" with no hand-kept file.
-- **Engram** (agent memory) — the cross-session *narrative*: decisions, why an
+- **Engram** (agent memory) — the cross-session _narrative_: decisions, why an
   approach was chosen, gotchas. Project-scoped, lives in the agent's memory (not
   the repo); surfaced with `mem_search` / `mem_context`.
 
@@ -186,6 +187,28 @@ the `seo-guide-lines` checklist, and `pnpm verify`. `CHECKPOINTS.md` is the
 merged, authoritative checklist — it references the skills rather than
 duplicating their rules.
 
+## Task routing (Claude Code subagents)
+
+> Claude Code-specific (like the **External skills — GSAP** section below).
+> Other coding agents can ignore this section and do the work directly.
+
+Subagents live in `.claude/agents/` (they travel with the clone, like
+`front-end-astro`/`seo-guide-lines`). Before doing multi-step work, classify
+the request and delegate to the matching subagent instead of doing it
+yourself:
+
+| Request type                                                                          | Delegate to  |
+| ------------------------------------------------------------------------------------- | ------------ |
+| git: stage, commit, push, open a PR                                                   | `git-ops`    |
+| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` |
+| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work with images | `coder`      |
+| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   |
+| web research, external documentation (Context7), browsing with agent-browser          | `research`   |
+
+For everything else (general questions, single-file reads, quick lookups)
+answer directly yourself. Never let a subagent commit or push without the
+user explicitly asking for it in the current turn.
+
 ## Conventions for writing components (must-follow)
 
 - Props typed with an `interface`; import everything via `@/`.
@@ -212,19 +235,19 @@ add page types…). One rule keeps the harness honest:
 
 > **This file and the skills are read as truth.** When you change
 > infrastructure, update the contract **in the same change** — never leave docs
-> stale "for later". `pnpm verify` checks the *code*; it does **not** check
+> stale "for later". `pnpm verify` checks the _code_; it does **not** check
 > whether this file or the skills are still accurate. That is on you.
 
 ### If you change X → update Y
 
-| If you… | Update… |
-|---|---|
-| Add a dependency / remove one | `package.json` · **Tech stack** above |
+| If you…                                             | Update…                                                                                                                                                                                                                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add a dependency / remove one                       | `package.json` · **Tech stack** above                                                                                                                                                                                                                       |
 | Add server Actions + an email service (e.g. Resend) | `astro.config.mjs` `env.schema` · `src/actions/` · `prerender = false` on the page · **Tech stack** · **Architecture** · remove the "no server actions / no email" warning at the top · add the API key + recipient to the **Knobs map** + `client-gaps.md` |
-| Swap the animation library (e.g. remove GSAP) | the scripts in `src/utils/scripts/animations/` · **Tech stack** + **Conventions** here · **and** `.claude/skills/front-end-astro/SKILL.md`, which **names GSAP by hand** and branches on it (the "if GSAP installed…" motion rules) |
-| Add/rename a config file in `src/config/` | **Config** section · **Knobs map** |
-| Add a new font slot | the 3 font files (see Knobs map) |
-| Change folder conventions | **Components** section · the structure note in `front-end-astro` SKILL.md |
+| Swap the animation library (e.g. remove GSAP)       | the scripts in `src/utils/scripts/animations/` · **Tech stack** + **Conventions** here · **and** `.claude/skills/front-end-astro/SKILL.md`, which **names GSAP by hand** and branches on it (the "if GSAP installed…" motion rules)                         |
+| Add/rename a config file in `src/config/`           | **Config** section · **Knobs map**                                                                                                                                                                                                                          |
+| Add a new font slot                                 | the 3 font files (see Knobs map)                                                                                                                                                                                                                            |
+| Change folder conventions                           | **Components** section · the structure note in `front-end-astro` SKILL.md                                                                                                                                                                                   |
 
 > **Gotcha:** the `front-end-astro` skill hardcodes the word **GSAP** and decides
 > whether to add CSS animations based on its presence. Removing GSAP without
