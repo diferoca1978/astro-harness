@@ -9,7 +9,13 @@ Never skip or omit either one, even if a request only mentions one of them.
 
 - `arquitectura-informacion.md` — site architecture (sitemap, URLs, nav/footer
   spec) + copy per page and section. This is the **content source of truth**.
-- `brand.md` — brand input: color palette (hex/oklch), fonts, logo, photos.
+- `brand.md` — brand input: color palette (hex/oklch), fonts, logo, photos,
+  and (optional) **animation strategy** — say explicitly if this client needs
+  GSAP (scroll/timeline-heavy animation) or is fine with vanilla (lightweight
+  Tailwind transitions, no animation library). If you don't state one, the
+  agent will ask before building the first animated section rather than
+  assume the scaffold's GSAP default — see `AGENTS.md` § "Animation
+  strategy".
 
 If either file is missing, **stop and ask for it** before ingesting — do not
 proceed with only one of the two, and do not silently invent brand or content
@@ -24,7 +30,8 @@ confirms it isn't available yet.
    Astro Fonts API config.
 2. Generates `feature_list.json` — one feature per section/page.
 3. Writes `client-gaps.md` at the repo root — the short list of things the
-   brief does NOT cover (phone, email, brand palette, fonts, logo, photos).
+   brief does NOT cover (phone, email, brand palette, fonts, logo, photos,
+   animation strategy if `brand.md` didn't state one).
 
 The content brief (`arquitectura-informacion.md`) does **not** carry brand
 colors/fonts — those come from `brand.md` and land only in
