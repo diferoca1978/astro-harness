@@ -129,9 +129,14 @@ The whole point of the scaffold is this boundary.
 
 ## The harness — how to build a client site
 
-1. **Brief in** → the client brief (architecture + copy) goes in `docs/brief/`.
-2. **Ingest** → read the brief and populate `config/*` + `navigation.ts`,
-   generate `feature_list.json` (one feature per section/page), and write
+1. **Brief in** → the client brief goes in `docs/brief/`: `arquitectura-informacion.md`
+   (architecture + copy) and `brand.md` (colors, fonts, logo, photos). **Both
+   files are mandatory** — always read both when ingesting, never omit either
+   one. If one is missing, stop and ask for it before proceeding (see
+   `docs/brief/README.md`).
+2. **Ingest** → read **both** brief files and populate `config/*` +
+   `navigation.ts` + `global.css` `@theme` (brand tokens), generate
+   `feature_list.json` (one feature per section/page), and write
    `client-gaps.md` listing only what the brief does NOT cover (phone, email,
    brand palette, fonts, logo, photos…).
 3. **Build, one feature at a time** → only **one** feature may be `in_progress`.
@@ -187,27 +192,63 @@ the `seo-guide-lines` checklist, and `pnpm verify`. `CHECKPOINTS.md` is the
 merged, authoritative checklist — it references the skills rather than
 duplicating their rules.
 
-## Task routing (Claude Code subagents)
+## Orchestration model (Claude Code subagents)
 
 > Claude Code-specific (like the **External skills — GSAP** section below).
 > Other coding agents can ignore this section and do the work directly.
 
-Subagents live in `.claude/agents/` (they travel with the clone, like
-`front-end-astro`/`seo-guide-lines`). Before doing multi-step work, classify
-the request and delegate to the matching subagent instead of doing it
-yourself:
+**The main session is the _orchestrator_.** Its job is to understand the
+request, classify it, decide **delegate vs. handle inline**, route delegated
+work to the right specialist subagent, and synthesize the results — not to do
+all the heavy lifting itself. The specialists live in `.claude/agents/` and
+travel with every clone.
 
-| Request type                                                                          | Delegate to  |
-| ------------------------------------------------------------------------------------- | ------------ |
-| git: stage, commit, push, open a PR                                                   | `git-ops`    |
-| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` |
-| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work with images | `coder`      |
-| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   |
-| web research, external documentation (Context7), browsing with agent-browser          | `research`   |
+### Orchestrator model — recommended, not forced
 
-For everything else (general questions, single-file reads, quick lookups)
-answer directly yourself. Never let a subagent commit or push without the
-user explicitly asking for it in the current turn.
+- **Default: Sonnet.** Routing, delegate-vs-inline decisions, and light inline
+  work are not "Opus-hard", and the specialists already run on cheaper models
+  (see table) — an Opus orchestrator would be the single most expensive part of
+  every session for a small-business landing site.
+- **Escalate to Opus manually** (`/model opus`) only for genuinely hard work
+  that stays in the main session: ambiguous architecture, complex planning, or
+  advanced Three.js/shader work `coder` flags back up.
+- This is a **recommendation**, not a hard pin. The scaffold ships **no**
+  `.claude/settings.json` forcing a model, so each clone/user keeps their own
+  preference. Don't add one just to enforce this.
+
+### Delegate vs. handle inline
+
+Delegation is **not free**: every subagent starts cold and re-derives context
+(re-reads `AGENTS.md`, re-explores the repo), so a delegated task usually burns
+_more_ total tokens than doing it inline — you trade tokens for context
+isolation. Route accordingly:
+
+- **Delegate** when the work is substantial and self-contained enough that the
+  cold-start cost amortizes: building a whole section/feature, a multi-file
+  refactor/review, a real research dive, a git commit flow.
+- **Handle inline** (in the orchestrator session) for small, context-bound work
+  where a round-trip would cost more than it saves: general questions,
+  single-file reads, quick lookups, a one-line tweak, and **any visual work
+  that needs an attached image** (subagents can't receive image attachments).
+
+### Routing table — one specialist per request type
+
+| Request type                                                                          | Delegate to  | Model  |
+| ------------------------------------------------------------------------------------- | ------------ | ------ |
+| git: stage, commit, push, open a PR                                                   | `git-ops`    | haiku  |
+| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` | haiku  |
+| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work (no image)  | `coder`      | sonnet |
+| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   | sonnet |
+| web research, external documentation (Context7), browsing with agent-browser          | `research`   | sonnet |
+
+### Non-negotiables
+
+- Never let a subagent commit or push without the user explicitly asking for it
+  **in the current turn** — a past approval does not carry over.
+- Never let `git-ops` push or open a PR unless the user requested that specific
+  action this turn (see `git-ops.md`).
+- Image-based visual work stays in the orchestrator session; do not try to
+  delegate it to `coder` (it can't see the image).
 
 ## Conventions for writing components (must-follow)
 
@@ -273,6 +314,14 @@ The official GreenSock skills are installed (vanilla subset only):
 `gsap-utils`, `gsap-performance`. They teach **how** to write correct GSAP and
 are the reference for animation code.
 
+**Who invokes them:** whoever writes the animation — the orchestrator session
+when it builds inline, or the **`coder`** subagent when the work is delegated.
+Before writing GSAP by hand, invoke (with the `Skill` tool) the `gsap-*` skill
+that matches the technique, picking only the ones that apply. The operational
+routing for this lives in `.claude/agents/coder.md` § "Skill routing when
+building animations" — keep the two in sync. (`coder` can load skills because
+it inherits all tools; a restrictive `tools:` list must still include `Skill`.)
+
 `gsap-react` and `gsap-frameworks` are **deliberately not installed** — this
 scaffold is vanilla (no React/Vue/Svelte). Do not reach for `useGSAP` or any
 framework-specific GSAP API.
@@ -288,5 +337,6 @@ technique; the harness owns placement and accessibility:
   `matchMedia`; the harness makes it a hard requirement (also in `CHECKPOINTS.md`
   and the `front-end-astro` skill).
 - **Division of labor**: `front-end-astro` builds the markup (no animation) →
-  the `gsap-*` skills inform the animation written in the utils file → this
-  contract dictates where it goes and that it respects reduced motion.
+  the `gsap-*` skills inform the animation that `coder` (or the orchestrator)
+  writes in the utils file → this contract dictates where it goes and that it
+  respects reduced motion.
