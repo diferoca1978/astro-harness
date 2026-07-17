@@ -40,9 +40,13 @@ if it builds and type-checks, most breakage is already excluded.
 - **Astro 6** — static site generator, file-based routing.
 - **Tailwind CSS 4** — via `@tailwindcss/vite`. **No `tailwind.config.js`** —
   the theme is defined inline with `@theme` in `src/styles/global.css`.
-- **GSAP 3 + Lenis** — Lenis smooth scroll lives in
-  `src/utils/scripts/lennis.js`; per-section GSAP scripts in
-  `src/utils/scripts/animations/`.
+- **Lenis** (smooth scroll, `src/utils/scripts/lennis.js`) +
+  **GSAP 3 as the default animation strategy** — per-section scripts in
+  `src/utils/scripts/animations/`. GSAP is a **per-client knob**, not a hard
+  invariant: some clients run **vanilla** (Tailwind transitions + plain TS,
+  no animation library) instead. See **Knobs map** → "Animation strategy" and
+  § "Animation strategy — GSAP (default) or vanilla" below before assuming
+  either one.
 - **astro-seo** + **@astrojs/sitemap** — SEO meta + auto sitemap.
 - **@astrojs/netlify** — deploy adapter (Netlify).
 - Blog content is **local markdown** in `src/contentBlogs/`.
@@ -108,6 +112,7 @@ The whole point of the scaffold is this boundary.
 | Services / specialties                         | `src/config/services.ts`                                                                                                                                                                       | Brief                                      |
 | FAQs                                           | `src/config/faqs.ts`                                                                                                                                                                           | Brief                                      |
 | Author / credentials                           | `src/config/authorBio.ts`                                                                                                                                                                      | Brief                                      |
+| Animation strategy (GSAP vs. vanilla)          | `package.json` (`gsap` present or not) · `.claude/skills/gsap-*` (present or removed) · `AGENTS.md` § "Animation strategy" · `CHECKPOINTS.md`                                                  | Brief (`brand.md`) or asked at intake — see "Animation strategy" below · `client-gaps.md` if not specified |
 | Navigation                                     | `src/utils/navigation.ts`                                                                                                                                                                      | Brief (§ nav spec)                         |
 | `lang` / locale                                | `src/layouts/MainLayout.astro` (`<html lang>`)                                                                                                                                                 | Default `es-CO`                            |
 | Pages                                          | `src/pages/*.astro`                                                                                                                                                                            | Brief (§ sitemap)                          |
@@ -129,11 +134,21 @@ The whole point of the scaffold is this boundary.
 
 ## The harness — how to build a client site
 
-1. **Brief in** → the client brief (architecture + copy) goes in `docs/brief/`.
-2. **Ingest** → read the brief and populate `config/*` + `navigation.ts`,
-   generate `feature_list.json` (one feature per section/page), and write
+1. **Brief in** → the client brief goes in `docs/brief/`: `arquitectura-informacion.md`
+   (architecture + copy) and `brand.md` (colors, fonts, logo, photos). **Both
+   files are mandatory** — always read both when ingesting, never omit either
+   one. If one is missing, stop and ask for it before proceeding (see
+   `docs/brief/README.md`).
+2. **Ingest** → read **both** brief files and populate `config/*` +
+   `navigation.ts` + `global.css` `@theme` (brand tokens), generate
+   `feature_list.json` (one feature per section/page), and write
    `client-gaps.md` listing only what the brief does NOT cover (phone, email,
-   brand palette, fonts, logo, photos…).
+   brand palette, fonts, logo, photos…). **Also resolve the animation
+   strategy now**: if `brand.md` doesn't state one, **ask** "GSAP (scroll/
+   timeline-heavy animation) or vanilla (lightweight Tailwind transitions)?"
+   before building the first animated section — never assume GSAP by
+   default just because the scaffold ships with it. Record the answer in
+   `client-gaps.md` if it wasn't in the brief. See "Animation strategy" below.
 3. **Build, one feature at a time** → only **one** feature may be `in_progress`.
    Route each feature to its builder skill (below), construct it against
    `config/*` + the brief, never hardcode data.
@@ -187,27 +202,65 @@ the `seo-guide-lines` checklist, and `pnpm verify`. `CHECKPOINTS.md` is the
 merged, authoritative checklist — it references the skills rather than
 duplicating their rules.
 
-## Task routing (Claude Code subagents)
+## Orchestration model (Claude Code subagents)
 
-> Claude Code-specific (like the **External skills — GSAP** section below).
-> Other coding agents can ignore this section and do the work directly.
+> Claude Code-specific (the `Skill`-tool invocation part of **Animation
+> strategy** below is too; the strategy decision itself is agent-agnostic).
+> Other coding agents can ignore the subagent-routing parts and do the work
+> directly.
 
-Subagents live in `.claude/agents/` (they travel with the clone, like
-`front-end-astro`/`seo-guide-lines`). Before doing multi-step work, classify
-the request and delegate to the matching subagent instead of doing it
-yourself:
+**The main session is the _orchestrator_.** Its job is to understand the
+request, classify it, decide **delegate vs. handle inline**, route delegated
+work to the right specialist subagent, and synthesize the results — not to do
+all the heavy lifting itself. The specialists live in `.claude/agents/` and
+travel with every clone.
 
-| Request type                                                                          | Delegate to  |
-| ------------------------------------------------------------------------------------- | ------------ |
-| git: stage, commit, push, open a PR                                                   | `git-ops`    |
-| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` |
-| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work with images | `coder`      |
-| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   |
-| web research, external documentation (Context7), browsing with agent-browser          | `research`   |
+### Orchestrator model — recommended, not forced
 
-For everything else (general questions, single-file reads, quick lookups)
-answer directly yourself. Never let a subagent commit or push without the
-user explicitly asking for it in the current turn.
+- **Default: Sonnet.** Routing, delegate-vs-inline decisions, and light inline
+  work are not "Opus-hard", and the specialists already run on cheaper models
+  (see table) — an Opus orchestrator would be the single most expensive part of
+  every session for a small-business landing site.
+- **Escalate to Opus manually** (`/model opus`) only for genuinely hard work
+  that stays in the main session: ambiguous architecture, complex planning, or
+  advanced Three.js/shader work `coder` flags back up.
+- This is a **recommendation**, not a hard pin. The scaffold ships **no**
+  `.claude/settings.json` forcing a model, so each clone/user keeps their own
+  preference. Don't add one just to enforce this.
+
+### Delegate vs. handle inline
+
+Delegation is **not free**: every subagent starts cold and re-derives context
+(re-reads `AGENTS.md`, re-explores the repo), so a delegated task usually burns
+_more_ total tokens than doing it inline — you trade tokens for context
+isolation. Route accordingly:
+
+- **Delegate** when the work is substantial and self-contained enough that the
+  cold-start cost amortizes: building a whole section/feature, a multi-file
+  refactor/review, a real research dive, a git commit flow.
+- **Handle inline** (in the orchestrator session) for small, context-bound work
+  where a round-trip would cost more than it saves: general questions,
+  single-file reads, quick lookups, a one-line tweak, and **any visual work
+  that needs an attached image** (subagents can't receive image attachments).
+
+### Routing table — one specialist per request type
+
+| Request type                                                                          | Delegate to  | Model  |
+| ------------------------------------------------------------------------------------- | ------------ | ------ |
+| git: stage, commit, push, open a PR                                                   | `git-ops`    | haiku  |
+| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` | haiku  |
+| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work (no image)  | `coder`      | sonnet |
+| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   | sonnet |
+| web research, external documentation (Context7), browsing with agent-browser          | `research`   | sonnet |
+
+### Non-negotiables
+
+- Never let a subagent commit or push without the user explicitly asking for it
+  **in the current turn** — a past approval does not carry over.
+- Never let `git-ops` push or open a PR unless the user requested that specific
+  action this turn (see `git-ops.md`).
+- Image-based visual work stays in the orchestrator session; do not try to
+  delegate it to `coder` (it can't see the image).
 
 ## Conventions for writing components (must-follow)
 
@@ -218,11 +271,15 @@ user explicitly asking for it in the current turn.
 - SVG icons: import from `@/assets/icons/`, never inline `<svg>` markup.
 - No inline `style=""`, no arbitrary values (`h-[220px]`).
 - Tailwind 4 gradients: `bg-linear-to-*` (never the v3 `bg-gradient-to-*`).
-- GSAP animations live in `src/utils/scripts/animations/` — do **not** add
-  animations inside components. Every timeline **must** respect
-  `prefers-reduced-motion` via `gsap.matchMedia()` — the `reduce` branch sets
-  elements to their final, visible state (`autoAlpha: 1`) so content is never
-  left hidden. See the `front-end-astro` skill for the canonical pattern.
+- Animations (GSAP **or** vanilla — see "Animation strategy" below) live in
+  `src/utils/scripts/animations/` — do **not** add animation logic inside
+  components. Every animation **must** respect `prefers-reduced-motion`: GSAP
+  timelines via `gsap.matchMedia()` (the `reduce` branch sets elements to
+  their final, visible state, `autoAlpha: 1`); vanilla animations via
+  `window.matchMedia('(prefers-reduced-motion: reduce)')` or the
+  `motion-reduce:` Tailwind variant — either way, content must never be left
+  hidden or mid-animation for these users. See the `front-end-astro` skill for
+  the canonical pattern.
 - CSS/Tailwind motion must degrade with the `motion-reduce:` variant.
 - Exactly one `<h1>` per page (it is the page's primary entity/keyword).
 
@@ -244,14 +301,18 @@ add page types…). One rule keeps the harness honest:
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Add a dependency / remove one                       | `package.json` · **Tech stack** above                                                                                                                                                                                                                       |
 | Add server Actions + an email service (e.g. Resend) | `astro.config.mjs` `env.schema` · `src/actions/` · `prerender = false` on the page · **Tech stack** · **Architecture** · remove the "no server actions / no email" warning at the top · add the API key + recipient to the **Knobs map** + `client-gaps.md` |
-| Swap the animation library (e.g. remove GSAP)       | the scripts in `src/utils/scripts/animations/` · **Tech stack** + **Conventions** here · **and** `.claude/skills/front-end-astro/SKILL.md`, which **names GSAP by hand** and branches on it (the "if GSAP installed…" motion rules)                         |
+| Choose vanilla instead of GSAP for a client (or vice versa) | `pnpm remove gsap` (or add it) · delete/restore `.claude/skills/gsap-*` · **Knobs map** row · `client-gaps.md` (record the decision) · `CHECKPOINTS.md` motion checklist — see "Animation strategy" below for the full checklist              |
 | Add/rename a config file in `src/config/`           | **Config** section · **Knobs map**                                                                                                                                                                                                                          |
 | Add a new font slot                                 | the 3 font files (see Knobs map)                                                                                                                                                                                                                            |
 | Change folder conventions                           | **Components** section · the structure note in `front-end-astro` SKILL.md                                                                                                                                                                                   |
 
-> **Gotcha:** the `front-end-astro` skill hardcodes the word **GSAP** and decides
-> whether to add CSS animations based on its presence. Removing GSAP without
-> editing that skill will leave it telling agents the wrong thing.
+> **Not a gotcha (verify before you assume it is one):** `front-end-astro`
+> already detects GSAP dynamically — its Step 1 reads `package.json` and
+> branches motion guidance on whether `gsap` is actually a dependency, it
+> does not hardcode an assumption. `coder.md` must follow the same pattern
+> (see "Animation strategy" below) — the actual failure mode seen in the wild
+> was `AGENTS.md` **prose** (Tech stack, Conventions, this table) going stale
+> after `gsap` was removed from `package.json`, not the skill misbehaving.
 
 ### Scaffold-level vs per-client
 
@@ -266,19 +327,51 @@ reality before committing.
 
 ---
 
-## External skills — GSAP
+## Animation strategy — GSAP (default) or vanilla
 
-The official GreenSock skills are installed (vanilla subset only):
-`gsap-core`, `gsap-timeline`, `gsap-scrolltrigger`, `gsap-plugins`,
-`gsap-utils`, `gsap-performance`. They teach **how** to write correct GSAP and
-are the reference for animation code.
+The scaffold ships **two supported animation strategies**, not one hardcoded
+choice. Which one a given client uses is a **per-client knob**, resolved once
+at ingest (see harness step 2) and never silently assumed:
+
+| | **GSAP** (default) | **Vanilla** |
+| --- | --- | --- |
+| When | Client needs scroll-driven/timeline-heavy motion (pinning, sequenced reveals, complex easing) | Client needs light micro-interactions only (accordions, dropdowns, hover/fade) — leaner dependency footprint |
+| Dependency | `gsap` in `package.json` | none — plain TS + Tailwind transitions |
+| Skills used | `gsap-core`, `gsap-timeline`, `gsap-scrolltrigger`, `gsap-plugins`, `gsap-utils`, `gsap-performance` (installed in `.claude/skills/`) | none — hand-written, following the **Conventions** section above |
+| Reduced motion | `gsap.matchMedia()` with a `(prefers-reduced-motion: reduce)` branch (see pattern below) | `window.matchMedia('(prefers-reduced-motion: reduce)')` guard, or the Tailwind `motion-reduce:` variant |
+
+**Before writing any animation, know which strategy this client uses.** Check
+`package.json` for `gsap` (source of truth — not this file's prose, which can
+go stale). If it's ambiguous or this is the first animated feature and the
+brief never said, **ask** — don't assume GSAP just because it's the scaffold
+default. This check applies to **whoever writes the animation** — the
+orchestrator session inline, or the **`coder`** subagent when delegated; the
+operational routing lives in `.claude/agents/coder.md` § "Skill routing when
+building animations" — keep the two in sync.
+
+**If GSAP**: before writing code by hand, invoke (with the `Skill` tool) the
+`gsap-*` skill that matches the technique, picking only the ones that apply.
+(`coder` can load skills because it inherits all tools; a restrictive `tools:`
+list must still include `Skill`.)
 
 `gsap-react` and `gsap-frameworks` are **deliberately not installed** — this
-scaffold is vanilla (no React/Vue/Svelte). Do not reach for `useGSAP` or any
-framework-specific GSAP API.
+scaffold is vanilla-framework (no React/Vue/Svelte) regardless of animation
+strategy. Do not reach for `useGSAP` or any framework-specific GSAP API.
 
-**This file overrides the GSAP skills where they differ.** The skills inform
-technique; the harness owns placement and accessibility:
+**If vanilla**: do not invoke the `gsap-*` skills or write `gsap.matchMedia()`
+— write plain TS in `src/utils/scripts/animations/` using class toggles /
+Tailwind transitions, per the **Conventions** section above.
+
+**Switching a client from one strategy to the other** is a real, supported
+path, not an afterthought — follow the "Evolving the scaffold" table row
+above in full (uninstall/install `gsap`, remove/restore the skill folder,
+update the Knobs map + `client-gaps.md` + `CHECKPOINTS.md`) so this file and
+the skills stay true. Skipping any of those steps is exactly how a past
+client repo ended up with `AGENTS.md` still describing GSAP after it had
+already been removed from `package.json`.
+
+**This file overrides the GSAP skills where they differ** (GSAP branch only).
+The skills inform technique; the harness owns placement and accessibility:
 
 - **Where**: all GSAP lives in `src/utils/scripts/animations/`, never inside
   components, never in a framework.
@@ -287,6 +380,7 @@ technique; the harness owns placement and accessibility:
   elements in their final, visible state (`autoAlpha: 1`). `gsap-core` documents
   `matchMedia`; the harness makes it a hard requirement (also in `CHECKPOINTS.md`
   and the `front-end-astro` skill).
-- **Division of labor**: `front-end-astro` builds the markup (no animation) →
-  the `gsap-*` skills inform the animation written in the utils file → this
-  contract dictates where it goes and that it respects reduced motion.
+- **Division of labor**: `front-end-astro` builds the markup (no animation,
+  either strategy) → the `gsap-*` skills inform the animation that `coder`
+  (or the orchestrator) writes in the utils file → this contract dictates
+  where it goes and that it respects reduced motion.
