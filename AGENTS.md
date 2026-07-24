@@ -33,7 +33,10 @@ pnpm prettier --write .   # formatting (no eslint configured)
 ```
 
 There is no test runner. For a static site, **`pnpm verify` is the test suite**:
-if it builds and type-checks, most breakage is already excluded.
+if it builds and type-checks, most breakage is already excluded. **`pnpm
+verify` is on-demand, not run automatically** — only run it when the user
+explicitly asks (e.g. "run verify", "check it builds"). Do not run it by
+default after every feature or as a silent step before marking something done.
 
 ## Tech stack (as actually installed — see package.json)
 
@@ -152,9 +155,11 @@ The whole point of the scaffold is this boundary.
 3. **Build, one feature at a time** → only **one** feature may be `in_progress`.
    Route each feature to its builder skill (below), construct it against
    `config/*` + the brief, never hardcode data.
-4. **Verify** → `pnpm verify` (build + astro check + customization lint).
-5. **Mark done** → set the feature to `status: "done"` in `feature_list.json`
+4. **Mark done** → set the feature to `status: "done"` in `feature_list.json`
    and commit (the git log is the build log — see _Where state & memory live_).
+
+`pnpm verify` (build + astro check + customization lint) is **not** run as a
+default step in this loop — only run it when the user explicitly asks for it.
 
 If a feature needs data that is still in `client-gaps.md`, **ask for it before
 building** — do not silently invent it. A marked placeholder is acceptable only
@@ -197,10 +202,10 @@ page with `seo-guide-lines`. A page feature that needs both lists both in
 
 ### Acceptance — see `CHECKPOINTS.md`
 
-A section/page is "done" only when it passes the `front-end-astro` constraints,
-the `seo-guide-lines` checklist, and `pnpm verify`. `CHECKPOINTS.md` is the
-merged, authoritative checklist — it references the skills rather than
-duplicating their rules.
+A section/page is "done" only when it passes the `front-end-astro` constraints
+and the `seo-guide-lines` checklist in `CHECKPOINTS.md`. `pnpm verify` is an
+on-demand gate the user can request at any point (e.g. before production) —
+see `CHECKPOINTS.md` for the pre-production checklist.
 
 ## Orchestration model (Claude Code subagents)
 
@@ -322,8 +327,8 @@ add page types…). One rule keeps the harness honest:
   legitimately diverges from the base. Do **not** push client-specific
   infrastructure back into the boilerplate.
 
-After any such change, run `pnpm verify` and confirm this file still matches
-reality before committing.
+After any such change, confirm this file still matches reality before
+committing. `pnpm verify` remains on-demand — only run it if the user asks.
 
 ---
 

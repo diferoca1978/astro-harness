@@ -1,46 +1,42 @@
-# CHECKPOINTS — acceptance criteria for a feature
+# CHECKPOINTS — pre-production checklist
 
-A feature (section or page) is **done** only when every box below is checked.
-This list does not re-invent rules; it **merges** what the two builder skills
-already enforce and adds the page-level checks. When in doubt, the skill's own
-SKILL.md is authoritative for its column.
+Run through every box below **before** handing a client site off as live. Each
+item is conditional on the one above it — do not skip ahead.
 
-## Always (every feature)
+## 1. Real domain set in the project
 
-- [ ] `pnpm verify` passes (build + `astro check` + customization lint).
-- [ ] No data hardcoded — content comes from `src/config/*` or the brief.
-- [ ] All internal imports use the `@/` alias.
-- [ ] Props typed with an `interface`.
+- [ ] `astro.config.mjs` → `site:` is the real client domain (e.g.
+      `https://elsitiodelabogado.com`), not the scaffold placeholder
+      (`https://example.com`) or a Netlify preview URL
+      (`https://<name>.netlify.app`).
+- [ ] `src/config/seo.ts` → `COMPANY_INFO.url` matches the same real domain
+      (no `https://tuagencia.com` placeholder, no `.netlify.app`).
+- [ ] The two values above are **identical** — no drift between
+      `astro.config.mjs` and `COMPANY_INFO.url`.
 
-## Visual / structural — owned by `front-end-astro`
+## 2. Domain configured on Netlify (only if step 1 is done)
 
-- [ ] Pure Astro + semantic HTML + Tailwind. No React/Vue/etc.
-- [ ] No inline `style=""`. No arbitrary values (`h-[220px]`, `top-[13px]`).
-- [ ] Colors/fonts come from `global.css` tokens via Tailwind utilities — no
-      hardcoded hex/oklch.
-- [ ] Images via `<Image>`/`<Picture>` from `astro:assets`; `alt` on every one.
-- [ ] SVG icons imported from `@/assets/icons/`; no inline `<svg>`.
-- [ ] Gradients use `bg-linear-to-*` (Tailwind 4), never `bg-gradient-to-*`.
-- [ ] No animation logic inside the component (lives in
-      `src/utils/scripts/animations/`, GSAP or vanilla per this client's
-      animation strategy — see `AGENTS.md` § "Animation strategy").
-- [ ] Motion respects `prefers-reduced-motion`: GSAP timelines wrapped in
-      `gsap.matchMedia()` (reduce branch shows the final visible state), or
-      vanilla animations guarded via `window.matchMedia` / the
-      `motion-reduce:` variant — whichever strategy this client uses.
-- [ ] Responsive (mobile-first); tap targets and base font legible on mobile.
+- [ ] Custom domain added in Netlify site settings (not just the default
+      `<name>.netlify.app`).
+- [ ] DNS records for the domain point to Netlify (nameservers or the
+      apex/CNAME records Netlify issued).
+- [ ] DNS has propagated and Netlify shows the domain as verified.
+- [ ] HTTPS/SSL certificate is issued and active for the custom domain.
 
-## SEO / content — owned by `seo-guide-lines` (page-level)
+## 3. Resend configured on the project
 
-- [ ] Exactly **one `<h1>`** on the page; logical H2→H3 nesting, no skips.
-- [ ] `<title>` 50–60 chars, meta description 150–160, via
-      `generateDynamicSEO()`.
-- [ ] At least one JSON-LD schema; FAQ/Service/Breadcrumb where applicable.
-- [ ] Company data pulled from `COMPANY_INFO` (NAP consistent everywhere).
-- [ ] Content is self-contained and answers questions directly (AEO/GEO).
-- [ ] E-E-A-T signals present where relevant (credentials, experience).
+- [ ] Resend is actually integrated (dependency installed, API key present,
+      contact form wired to send through it) — this scaffold ships with
+      **no** email service by default, so confirm it was added, not assumed.
+- [ ] The Resend API key is stored as an environment variable (Netlify env
+      vars), never committed to the repo.
 
-## Done
+## 4. Resend domain verified with DNS (only if steps 1 and 3 are done)
 
-- [ ] `feature_list.json` updated → `status: "done"`.
-- [ ] Work committed — the git log is the build log (no `progress/` journal).
+- [ ] The real client domain (from step 1) is added as a sending domain in
+      the Resend dashboard.
+- [ ] Resend's DNS records (SPF, DKIM, and DMARC if provided) are added at
+      the domain's DNS provider.
+- [ ] Resend shows the domain status as **verified** (not "pending").
+- [ ] A test email sends successfully from the contact form using the
+      verified domain.
