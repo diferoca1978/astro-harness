@@ -19,6 +19,19 @@ You implement code changes in this repo (Astro + Tailwind 4, animation strategy 
 - Client config lives in `src/config/*` (`seo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts`) and `src/utils/navigation.ts` — never hardcode client data in a component, always read it from there.
 - If you're missing a client data point, check `client-gaps.md` before inventing it.
 
+### Scaffold-level changes require an Approved spec first
+
+If the request matches AGENTS.md § "Evolving the scaffold" (add server
+Actions + an email service, swap the animation strategy, add/rename a
+config file, change folder conventions, or anything else editing the
+**Invariant** side of the Invariant vs Variable table) — before writing any
+code, check `specs/` for a `NN-slug.md` covering it with `Status: Approved`.
+No matching Approved spec → stop and tell the orchestrator/user a spec is
+needed first (point at the `scaffold-spec` skill or `specs/README.md`); do
+not proceed on a Draft spec or a verbal description alone. This check does
+**not** apply to routine per-client work (sections/pages built from the
+brief) — only to scaffold-level changes.
+
 ### Skill routing when building animations
 
 **First, determine this client's animation strategy — never assume GSAP just because it's the scaffold default.** Check `package.json` for `gsap`:

@@ -179,6 +179,13 @@ do **not** recreate a `progress/` folder:
   approach was chosen, gotchas. Project-scoped, lives in the agent's memory (not
   the repo); surfaced with `mem_search` / `mem_context`.
 
+> **Scaffold-level changes** (see "Evolving the scaffold" below) go through
+> one additional artifact first — a spec in `specs/` that a human must flip
+> to `Approved` before implementation starts. This is a **pre-change
+> sign-off gate**, not a fourth store: it doesn't track build status,
+> completion, or narrative — those stay exactly where the three stores
+> above put them. See `specs/README.md`.
+
 ### Skill routing — the two builders work at different altitudes
 
 - **`front-end-astro`** = the **section/component** builder (visual). Fires once
@@ -266,6 +273,9 @@ isolation. Route accordingly:
   action this turn (see `git-ops.md`).
 - Image-based visual work stays in the orchestrator session; do not try to
   delegate it to `coder` (it can't see the image).
+- Never implement a scaffold-level change (see "Evolving the scaffold")
+  without a `specs/NN-slug.md` whose `Status` is `Approved` — a Draft, or an
+  approval on a different spec, does not authorize it.
 
 ## Conventions for writing components (must-follow)
 
@@ -302,6 +312,10 @@ add page types…). One rule keeps the harness honest:
 
 ### If you change X → update Y
 
+Every row below also requires an **Approved** spec in `specs/` before you
+start (see "Spec-first" subsection below) — the "Update…" column is what
+must land in the *same* change once implementation starts.
+
 | If you…                                             | Update…                                                                                                                                                                                                                                                     |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Add a dependency / remove one                       | `package.json` · **Tech stack** above                                                                                                                                                                                                                       |
@@ -329,6 +343,26 @@ add page types…). One rule keeps the harness honest:
 
 After any such change, confirm this file still matches reality before
 committing. `pnpm verify` remains on-demand — only run it if the user asks.
+
+### Spec-first: scaffold-level changes need an Approved spec before code
+
+Every change in the table above — and any other change of the same shape:
+multi-file, infra-level, expensive to revert — needs a spec in `specs/` with
+`Status: Approved` **before** implementation starts. A Draft is not
+authorization; only a human flips `Draft` → `Approved`, and never in the
+same turn that wrote the Draft.
+
+1. Write `specs/NN-slug.md` from `specs/TEMPLATE.md` (or ask the
+   `scaffold-spec` skill to draft it) — `Status: Draft`.
+2. A human reviews it and flips `Status` to `Approved`.
+3. Only then does `coder` (or whoever implements) touch the files — see
+   `.claude/agents/coder.md`. Asked to make a scaffold-level change with no
+   `Approved` spec on file, it stops and asks for one first.
+
+This gate applies **only** to scaffold-level changes. It does **not** apply
+to routine per-client section/page building — that's already fully
+specified by the brief + `CHECKPOINTS.md`, and spec ceremony there would be
+pure friction. See `specs/README.md` for the full convention.
 
 ---
 
