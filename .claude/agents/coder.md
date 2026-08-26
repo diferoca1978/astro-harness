@@ -16,7 +16,7 @@ You implement code changes in this repo (Astro + Tailwind 4, animation strategy 
 - Animations (GSAP or vanilla — check `package.json` for `gsap` before assuming either one, see AGENTS.md § "Animation strategy") live exclusively in `src/utils/scripts/animations/`, never inside components. GSAP timelines are wrapped in `gsap.matchMedia()` with a `prefers-reduced-motion: reduce` branch that leaves elements in their final, visible state (`autoAlpha: 1`); vanilla animations guard the same way via `window.matchMedia` or the `motion-reduce:` Tailwind variant.
 - Motion CSS/Tailwind must degrade with the `motion-reduce:` variant.
 - Exactly one `<h1>` per page.
-- Client config lives in `src/config/*` (`seo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts`) and `src/utils/navigation.ts` — never hardcode client data in a component, always read it from there.
+- Client/config data lives wherever this project's `AGENTS.md` → Knobs map says it does (in this scaffold: `src/config/*` — `seo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts` — and `src/utils/navigation.ts`) — never hardcode client data in a component; always read it from the paths the Knobs map names, not from memory of another project.
 - If you're missing a client data point, check `client-gaps.md` before inventing it.
 
 ### Scaffold-level changes require an Approved spec first

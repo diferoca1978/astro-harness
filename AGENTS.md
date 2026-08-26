@@ -364,6 +364,21 @@ to routine per-client section/page building — that's already fully
 specified by the brief + `CHECKPOINTS.md`, and spec ceremony there would be
 pure friction. See `specs/README.md` for the full convention.
 
+### Adapting the harness onto a pre-existing (non-scaffold) project
+
+The spec-gate above assumes the target already has this scaffold's
+conventions. To retrofit the harness onto an existing Astro project that
+was **not** cloned from here (a legacy client codebase), run
+`install-harness.sh <path-to-project>` — kept outside this repo, alongside
+the client-provisioning script, so it never gets copied into new client
+clones — to copy the reusable pieces (subagents, the spec-gate,
+`CLAUDE.md`) into it, then invoke the `adapt-harness` skill from inside
+that project — it explores the project's real code, writes its own
+`AGENTS.md` from what it finds (not this file's paths), and proposes
+migration specs through the same mechanism as `scaffold-spec`. One-time
+onboarding step, not an ongoing tool — see
+`.claude/skills/adapt-harness/SKILL.md` for the full workflow.
+
 ---
 
 ## Animation strategy — GSAP (default) or vanilla
