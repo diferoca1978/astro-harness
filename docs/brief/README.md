@@ -28,7 +28,13 @@ confirms it isn't available yet.
    `faqs`, `authorBio`, `COMPANY_INFO`) + `src/utils/navigation.ts`. Reads
    `brand.md` and populates `src/styles/global.css` (`@theme` tokens) + the
    Astro Fonts API config.
-2. Generates `feature_list.json` — one feature per section/page.
+2. Generates `feature_list.json` — one feature per section/page, each
+   carrying `source` (the exact brief section it comes from, e.g.
+   `arquitectura-informacion.md §2.1`) and `acceptance` (a boolean
+   checklist derived from that section plus any applicable
+   `CHECKPOINTS.md` items). This is the light lane of spec-driven design —
+   see `AGENTS.md` § "Spec-first". Nothing the brief doesn't answer gets
+   invented here; it goes to `client-gaps.md` instead (step 3 below).
 3. Writes `client-gaps.md` at the repo root — the short list of things the
    brief does NOT cover (phone, email, brand palette, fonts, logo, photos,
    animation strategy if `brand.md` didn't state one).

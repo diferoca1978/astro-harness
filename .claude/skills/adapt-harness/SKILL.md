@@ -58,13 +58,18 @@ Ask everything at once, then wait. Only ask what genuinely cannot be
 inferred from Phase 1 — do not ask what the code already answers. Typical:
 
 1. Discrepancies found between code, docs, and the supplementary `.md`.
-2. Animation strategy, if the code is ambiguous about it.
-3. Appetite for restructuring — how much migration is actually wanted vs.
+2. **Source documents this project has** — a brief, client content
+   documents (approved copy, FAQs, pricing sheets, etc.), or none. This
+   decides whether the light lane (`feature_list.json` with `source` +
+   `acceptance`) is usable for this project's routine work at all, or
+   whether everything here falls to the full `/spec` lane instead.
+3. Animation strategy, if the code is ambiguous about it.
+4. Appetite for restructuring — how much migration is actually wanted vs.
    "document what's there and leave it alone".
-4. Whether to also copy any scaffold-specific builder skill
+5. Whether to also copy any scaffold-specific builder skill
    (`front-end-astro`, `seo-guide-lines`, `gsap-*`,
    `tailwind-css-patterns`) — only sensible if the stack genuinely matches.
-5. Confirmation before overwriting, if an `AGENTS.md` already exists.
+6. Confirmation before overwriting, if an `AGENTS.md` already exists.
 
 ## Phase 4 — Write the project's own `AGENTS.md`
 
@@ -72,6 +77,29 @@ Same section skeleton as the scaffold's (Tech stack, Architecture,
 Invariant vs Variable, Knobs map, Orchestration model, Conventions,
 Evolving the scaffold, Spec-first), **populated from what Phase 1 actually
 found**. Every path named must exist in this project.
+
+Include a **"Development workflow"** section describing the two lanes all
+work goes through, and the routing rule between them:
+
+- **Full lane** — a decision with no source document to cite: `/spec`
+  produces a Draft → a human flips it to `Approved` → `/spec-impl NN`
+  implements it.
+- **Light lane** — the answer already lives in an approved document (a
+  brief, client-supplied content): an entry in `feature_list.json`
+  carrying `source` (the document and section it came from) and
+  `acceptance` (boolean criteria) → `/spec-impl feature <id>` implements
+  it.
+- **Both lanes end the same way** — implementation with pauses for
+  review, then `spec-verifier` checks the criteria against the real
+  build, then a human commits. No agent marks a spec `Approved` or a
+  feature `done`.
+
+The routing rule is mechanical, not a judgment call: if the answer is
+already written in an approved document, cite it — light lane. If there
+is a decision to make, it needs a spec — full lane. Use Phase 3's answer
+about source documents to state plainly, in this section, whether the
+light lane is usable for this project at all (it requires at least one
+real source document) or whether everything here falls to the full lane.
 
 If the real structure does not cleanly separate Invariant from Variable,
 **say so explicitly in that section** rather than inventing a table that
@@ -82,7 +110,7 @@ fiction.
 ## Phase 5 — Propose migration specs
 
 Only where restructuring has a real payoff. Use **exactly the mechanism of
-the `scaffold-spec` skill**: number sequentially from existing `specs/*.md`,
+the `/spec` skill**: number sequentially from existing `specs/*.md`,
 copy every section of `specs/TEMPLATE.md`, set `Status: Draft`.
 
 Prefer **several small, focused specs** over one sprawling migration — each
@@ -96,8 +124,12 @@ Report: the `AGENTS.md` written, how many specs were drafted (or none, and
 why), every discrepancy found in Phases 1–2, and the reminder that a human
 approves each spec manually before any implementation begins.
 
-## Relationship to `scaffold-spec`
+## Relationship to the two lanes
 
-This is a one-time onboarding step. Once the project is adapted, all future
-evolution goes through the normal `scaffold-spec` flow — this skill is not
-re-run for ordinary changes.
+This is a one-time onboarding step. Once the project is adapted, all
+future evolution goes through the two lanes described in the "Development
+workflow" section this skill just wrote into the project's `AGENTS.md`:
+`/spec` → `/spec-impl NN` for changes with no source document to cite, the
+`feature_list.json` light lane (`/spec-impl feature <id>`) for changes an
+approved document already answers. This skill is not re-run for ordinary
+changes.

@@ -19,18 +19,32 @@ You implement code changes in this repo (Astro + Tailwind 4, animation strategy 
 - Client/config data lives wherever this project's `AGENTS.md` → Knobs map says it does (in this scaffold: `src/config/*` — `seo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts` — and `src/utils/navigation.ts`) — never hardcode client data in a component; always read it from the paths the Knobs map names, not from memory of another project.
 - If you're missing a client data point, check `client-gaps.md` before inventing it.
 
-### Scaffold-level changes require an Approved spec first
+### All work goes through one of two lanes before code
 
-If the request matches AGENTS.md § "Evolving the scaffold" (add server
-Actions + an email service, swap the animation strategy, add/rename a
-config file, change folder conventions, or anything else editing the
-**Invariant** side of the Invariant vs Variable table) — before writing any
-code, check `specs/` for a `NN-slug.md` covering it with `Status: Approved`.
-No matching Approved spec → stop and tell the orchestrator/user a spec is
-needed first (point at the `scaffold-spec` skill or `specs/README.md`); do
-not proceed on a Draft spec or a verbal description alone. This check does
-**not** apply to routine per-client work (sections/pages built from the
-brief) — only to scaffold-level changes.
+Before writing any code, determine which lane applies — see `AGENTS.md` §
+"Spec-first" and `specs/README.md` for the full routing rule:
+
+- **Scaffold-level changes** — matches `AGENTS.md` § "Evolving the
+  scaffold" (add server Actions + an email service, swap the animation
+  strategy, add/rename a config file, change folder conventions, or
+  anything else editing the **Invariant** side of the Invariant vs
+  Variable table) — need a `specs/NN-slug.md` covering it with `Status:
+  Approved` on file. No matching Approved spec → stop and tell the
+  orchestrator/user a spec is needed first (point at the `/spec` skill or
+  `specs/README.md`); do not proceed on a Draft spec or a verbal
+  description alone.
+- **Writes to `src/config/`** (client data — `services.ts`, `faqs.ts`,
+  `authorBio.ts`, `seo.ts`, etc.) — need either a matching
+  `feature_list.json` entry with `source` **and** `acceptance` both
+  filled in (light lane — the data comes from an approved document), or
+  an Approved spec (full lane — no document backs it, e.g. inventing a
+  service or a claim). Writing client-facing data with neither in place
+  is exactly the gap that let unsourced content ship before; do not
+  invent a plausible value to fill it — stop and say what's missing, or
+  check `client-gaps.md` first per the rule above.
+- **Routine per-client section/page building** with no `src/config/`
+  writes involved stays ungated, as before — it is already fully
+  specified by the brief + `CHECKPOINTS.md`.
 
 ### Skill routing when building animations
 

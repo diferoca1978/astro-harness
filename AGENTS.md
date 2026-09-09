@@ -144,19 +144,30 @@ The whole point of the scaffold is this boundary.
    `docs/brief/README.md`).
 2. **Ingest** → read **both** brief files and populate `config/*` +
    `navigation.ts` + `global.css` `@theme` (brand tokens), generate
-   `feature_list.json` (one feature per section/page), and write
-   `client-gaps.md` listing only what the brief does NOT cover (phone, email,
-   brand palette, fonts, logo, photos…). **Also resolve the animation
-   strategy now**: if `brand.md` doesn't state one, **ask** "GSAP (scroll/
-   timeline-heavy animation) or vanilla (lightweight Tailwind transitions)?"
-   before building the first animated section — never assume GSAP by
-   default just because the scaffold ships with it. Record the answer in
-   `client-gaps.md` if it wasn't in the brief. See "Animation strategy" below.
-3. **Build, one feature at a time** → only **one** feature may be `in_progress`.
-   Route each feature to its builder skill (below), construct it against
-   `config/*` + the brief, never hardcode data.
-4. **Mark done** → set the feature to `status: "done"` in `feature_list.json`
-   and commit (the git log is the build log — see _Where state & memory live_).
+   `feature_list.json` (one feature per section/page). For each feature,
+   write `source` — the exact brief section it comes from (e.g.
+   `arquitectura-informacion.md §2.1`) — and derive `acceptance` from that
+   section plus any applicable `CHECKPOINTS.md` items. **Nothing the brief
+   doesn't answer gets invented here** — anything missing goes to
+   `client-gaps.md` and gets asked about, not filled with a plausible
+   guess (see "`feature_list.json`" above for the hard rule this enforces).
+   Also write `client-gaps.md` listing what the brief does NOT cover
+   (phone, email, brand palette, fonts, logo, photos…). **Also resolve the
+   animation strategy now**: if `brand.md` doesn't state one, **ask**
+   "GSAP (scroll/timeline-heavy animation) or vanilla (lightweight
+   Tailwind transitions)?" before building the first animated section —
+   never assume GSAP by default just because the scaffold ships with it.
+   Record the answer in `client-gaps.md` if it wasn't in the brief. See
+   "Animation strategy" below.
+3. **Build, one feature at a time** → only **one** feature may be `in_progress`,
+   and only once its `source` and `acceptance` are both filled in — see
+   "`feature_list.json`" above. Route each feature to its builder skill
+   (below), construct it against `config/*` + the brief, never hardcode
+   data.
+4. **Verify, then mark done** → run `spec-verifier` in feature mode against
+   the entry's `acceptance` checklist (see "Spec-first" below), then set
+   the feature to `status: "done"` in `feature_list.json` and commit (the
+   git log is the build log — see _Where state & memory live_).
 
 `pnpm verify` (build + astro check + customization lint) is **not** run as a
 default step in this loop — only run it when the user explicitly asks for it.
@@ -179,12 +190,15 @@ do **not** recreate a `progress/` folder:
   approach was chosen, gotchas. Project-scoped, lives in the agent's memory (not
   the repo); surfaced with `mem_search` / `mem_context`.
 
-> **Scaffold-level changes** (see "Evolving the scaffold" below) go through
-> one additional artifact first — a spec in `specs/` that a human must flip
-> to `Approved` before implementation starts. This is a **pre-change
-> sign-off gate**, not a fourth store: it doesn't track build status,
-> completion, or narrative — those stay exactly where the three stores
-> above put them. See `specs/README.md`.
+> All work goes through spec-driven design (SDD) first — see "Spec-first:
+> all work goes through one of two lanes" below. Neither lane adds a
+> fourth store: the full lane's pre-change sign-off artifact is a spec in
+> `specs/` that a human must flip to `Approved` before implementation
+> starts; the light lane's is `source` + `acceptance` on the
+> `feature_list.json` entry itself — two extra fields on the store that
+> was already here, not a new store. Neither tracks build status,
+> completion, or narrative differently from what the three stores above
+> already do. See `specs/README.md`.
 
 ### Skill routing — the two builders work at different altitudes
 
@@ -201,11 +215,22 @@ page with `seo-guide-lines`. A page feature that needs both lists both in
 
 ### `feature_list.json`
 
+This is the **light lane** of spec-driven design — see "Spec-first: all
+work goes through one of two lanes" below and `specs/README.md`.
+
 ```jsonc
-// each feature: { id, status, builders, nota }
+// each feature: { id, status, builders, nota, source, acceptance }
 // status: "pending" | "in_progress" | "done"   (only ONE in_progress at a time)
 // builders: subset of ["front-end-astro", "seo-guide-lines"]
+// source: REQUIRED — the brief section (or other approved document) this
+//   feature's content comes from, e.g. "arquitectura-informacion.md §2.1".
+// acceptance: REQUIRED — boolean checklist derived from source + any
+//   applicable CHECKPOINTS.md items, e.g. ["h1 matches copy in §2.1"].
 ```
+
+**Hard rule:** a feature cannot move to `in_progress` without both `source`
+and `acceptance` filled in. No document behind a feature means it isn't
+light-lane work — write a full spec with `/spec` instead.
 
 ### Acceptance — see `CHECKPOINTS.md`
 
@@ -273,9 +298,16 @@ isolation. Route accordingly:
   action this turn (see `git-ops.md`).
 - Image-based visual work stays in the orchestrator session; do not try to
   delegate it to `coder` (it can't see the image).
-- Never implement a scaffold-level change (see "Evolving the scaffold")
-  without a `specs/NN-slug.md` whose `Status` is `Approved` — a Draft, or an
-  approval on a different spec, does not authorize it.
+- Never implement work that needs SDD (see "Spec-first: all work goes
+  through one of two lanes") without that lane's authorization on file —
+  a `specs/NN-slug.md` whose `Status` is `Approved` for the full lane, or
+  a `feature_list.json` entry with `source` **and** `acceptance` both
+  filled in for the light lane. A Draft, an approval on a different spec,
+  or a feature missing either field does not authorize it. This gate
+  binds the orchestrating session as much as any subagent: a user asking
+  you to implement it this turn does not substitute for that
+  authorization. If it's still missing, stop and ask a human to provide
+  it first.
 
 ## Conventions for writing components (must-follow)
 
@@ -344,25 +376,36 @@ must land in the *same* change once implementation starts.
 After any such change, confirm this file still matches reality before
 committing. `pnpm verify` remains on-demand — only run it if the user asks.
 
-### Spec-first: scaffold-level changes need an Approved spec before code
+### Spec-first: all work goes through one of two lanes
 
 Every change in the table above — and any other change of the same shape:
-multi-file, infra-level, expensive to revert — needs a spec in `specs/` with
-`Status: Approved` **before** implementation starts. A Draft is not
-authorization; only a human flips `Draft` → `Approved`, and never in the
-same turn that wrote the Draft.
+multi-file, infra-level, expensive to revert — plus any client-data or
+design decision with no source document behind it, goes through
+spec-driven design (SDD) before implementation starts. SDD has **two
+lanes** that share implementation and verification and differ only in the
+input artifact — see `specs/README.md` for the full routing rule:
 
-1. Write `specs/NN-slug.md` from `specs/TEMPLATE.md` (or ask the
-   `scaffold-spec` skill to draft it) — `Status: Draft`.
-2. A human reviews it and flips `Status` to `Approved`.
-3. Only then does `coder` (or whoever implements) touch the files — see
-   `.claude/agents/coder.md`. Asked to make a scaffold-level change with no
-   `Approved` spec on file, it stops and asks for one first.
+- **Full lane** — no document already answers the question (a scaffold
+  change, a design decision, inventing anything client-facing). Run
+  `/spec` to draft `specs/NN-slug.md` from `specs/TEMPLATE.md`, `Status:
+  Draft`. A human reviews it and flips `Status` to `Approved` — never in
+  the same turn that wrote the Draft, and no agent may do this itself.
+  Only then does `coder` (or whoever implements) touch the files — see
+  `.claude/agents/coder.md`. Asked to implement with no `Approved` spec on
+  file, it stops and asks for one first.
+- **Light lane** — the answer is already written in an approved document
+  (a brief, client-supplied content). Add or update an entry in
+  `feature_list.json` with `source` and `acceptance` filled in, then run
+  `/spec-impl feature <id>`. A feature cannot move to `in_progress`
+  without both fields.
 
-This gate applies **only** to scaffold-level changes. It does **not** apply
-to routine per-client section/page building — that's already fully
-specified by the brief + `CHECKPOINTS.md`, and spec ceremony there would be
-pure friction. See `specs/README.md` for the full convention.
+Both lanes end the same way: `spec-verifier` runs every criterion for real
+against the build (for the light lane, that includes confirming the exact
+text cited in `source` actually landed), then a human commits. No agent
+marks a spec `Approved` or a feature `done`.
+
+This is not new ceremony for routine per-client work with a source
+document behind it — that is exactly what the light lane is for.
 
 ### Adapting the harness onto a pre-existing (non-scaffold) project
 
@@ -375,7 +418,7 @@ clones — to copy the reusable pieces (subagents, the spec-gate,
 `CLAUDE.md`) into it, then invoke the `adapt-harness` skill from inside
 that project — it explores the project's real code, writes its own
 `AGENTS.md` from what it finds (not this file's paths), and proposes
-migration specs through the same mechanism as `scaffold-spec`. One-time
+migration specs through the same mechanism as `/spec`. One-time
 onboarding step, not an ongoing tool — see
 `.claude/skills/adapt-harness/SKILL.md` for the full workflow.
 
