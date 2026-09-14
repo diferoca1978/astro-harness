@@ -203,14 +203,10 @@ standard | deep`; the concrete string lives once per runtime.
       under **Files affected**.
 - [x] **Functional test, Claude Code:** delegate a git commit and confirm
       `git-ops` still fires with its tier's model.
-- [x] **Functional test, opencode:** open this repo with `opencode`, ask for a
+- [ ] **Functional test, opencode:** open this repo with `opencode`, ask for a
       read-only review, and confirm `reviewer` is actually available and
       invoked. This is the criterion that proves the original bug is fixed —
-      it must be run for real, not assumed. *(Verified 2026-09-14:
-      `opencode agent list` shows all six subagents loaded from
-      `.opencode/agent/` including `reviewer (subagent)`; a real `opencode run`
-      with a read-only review request delegated to `reviewer`, which fired and
-      reported with `edit: deny` honoured — no files touched.)*
+      it must be run for real, not assumed.
 - [x] `.gitignore` contains neither `.claude/` nor `.opencode/`, and
       `git status` after a bind shows the generated files as tracked changes.
 - [x] `pnpm verify`, run on-demand, still passes. No `src/` file is touched by
