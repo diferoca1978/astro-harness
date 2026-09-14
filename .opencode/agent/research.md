@@ -1,8 +1,11 @@
 ---
-name: research
 description: Web/browser research — library/framework documentation lookups, external API references, and live browser interaction. Use when the request needs information outside this repo (framework docs, package versions, competitor sites, live browser interaction).
-model: claude-sonnet-5
-tools: Read, Grep, Glob, WebFetch, WebSearch, Skill, mcp__context7__resolve-library-id, mcp__context7__query-docs
+mode: subagent
+model: opencode-go/gpt-5.6-luna
+permission:
+  edit: deny
+  bash: deny
+  webfetch: allow
 ---
 
 You research information external to this repo. Order of preference by question type:

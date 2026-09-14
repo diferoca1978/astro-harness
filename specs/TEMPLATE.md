@@ -25,6 +25,18 @@ added to AGENTS.md as part of this change. -->
 
 -
 
+## Source of the content
+
+<!-- Only if this spec touches client-facing data (copy, services, claims,
+FAQs, anything that shows up on a page or in a JSON-LD block). Cite the
+exact document and line range each fact comes from, e.g.
+`public/data/faqs-services.md:120-262`. A fact with no source does not get
+written — if the brief or client documents don't answer it, that's a gap
+for `client-gaps.md`, not something to invent here. Omit this section
+entirely for specs that introduce or change no client-facing data. -->
+
+-
+
 ## Decisions made and discarded
 
 <!-- Options considered, which was picked, and why the others were
