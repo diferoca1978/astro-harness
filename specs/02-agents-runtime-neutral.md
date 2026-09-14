@@ -175,41 +175,45 @@ standard | deep`; the concrete string lives once per runtime.
 
 ## Acceptance criteria
 
-- [ ] `agents/` contains exactly six `.md` files; `grep -c '^tier:' agents/*.md`
+- [x] `agents/` contains exactly six `.md` files; `grep -c '^tier:' agents/*.md`
       reports `1` for each.
-- [ ] `grep -rE 'claude-(haiku|sonnet|opus)|anthropic/' agents/` returns **no
+- [x] `grep -rE 'claude-(haiku|sonnet|opus)|anthropic/' agents/` returns **no
       matches** — no model string survives in the neutral source.
-- [ ] `harness/runtimes/claude-code.json` and `harness/runtimes/opencode.json`
+- [x] `harness/runtimes/claude-code.json` and `harness/runtimes/opencode.json`
       both parse (`jq . <file>`) and each defines all three tiers.
-- [ ] **Body-preservation proof:** with `.claude/agents/` copied aside before
+- [x] **Body-preservation proof:** with `.claude/agents/` copied aside before
       the first run, `./harness/bind-runtime.sh claude-code` followed by
       `diff -r` shows differences **only** inside YAML frontmatter. A single
       differing line below the frontmatter fails this criterion.
-- [ ] The six regenerated `.claude/agents/*.md` frontmatters were reviewed by
+- [x] The six regenerated `.claude/agents/*.md` frontmatters were reviewed by
       hand once and judged equivalent to the originals — specifically the
       `tools:` lines, which the capability mapping will not reproduce
       character-for-character (`research.md` and `memory-ops.md` are the two
       that differ most).
-- [ ] `./harness/bind-runtime.sh opencode` produces six files in
+- [x] `./harness/bind-runtime.sh opencode` produces six files in
       `.opencode/agent/`, each with `mode: subagent` and a resolved `model:`.
-- [ ] `grep -rn 'mcp__' agents/` returns no matches (raw tool IDs replaced by
+- [x] `grep -rn 'mcp__' agents/` returns no matches (raw tool IDs replaced by
       capability phrasing).
-- [ ] `grep -rn '/model opus' agents/ AGENTS.md` returns no matches.
-- [ ] `AGENTS.md`'s routing table has a `Tier` column with `fast`/`standard`
+- [x] `grep -rn '/model opus' agents/ AGENTS.md` returns no matches.
+- [x] `AGENTS.md`'s routing table has a `Tier` column with `fast`/`standard`
       values, and no `haiku`/`sonnet` strings remain in that table.
-- [ ] `AGENTS.md`'s Knobs map has a "model per role" row pointing at
+- [x] `AGENTS.md`'s Knobs map has a "model per role" row pointing at
       `harness/runtimes/*.json`.
-- [ ] `AGENTS.md`'s "If you change X → update Y" table has the new row quoted
+- [x] `AGENTS.md`'s "If you change X → update Y" table has the new row quoted
       under **Files affected**.
-- [ ] **Functional test, Claude Code:** delegate a git commit and confirm
+- [x] **Functional test, Claude Code:** delegate a git commit and confirm
       `git-ops` still fires with its tier's model.
-- [ ] **Functional test, opencode:** open this repo with `opencode`, ask for a
+- [x] **Functional test, opencode:** open this repo with `opencode`, ask for a
       read-only review, and confirm `reviewer` is actually available and
       invoked. This is the criterion that proves the original bug is fixed —
-      it must be run for real, not assumed.
-- [ ] `.gitignore` contains neither `.claude/` nor `.opencode/`, and
+      it must be run for real, not assumed. *(Verified 2026-09-14:
+      `opencode agent list` shows all six subagents loaded from
+      `.opencode/agent/` including `reviewer (subagent)`; a real `opencode run`
+      with a read-only review request delegated to `reviewer`, which fired and
+      reported with `edit: deny` honoured — no files touched.)*
+- [x] `.gitignore` contains neither `.claude/` nor `.opencode/`, and
       `git status` after a bind shows the generated files as tracked changes.
-- [ ] `pnpm verify`, run on-demand, still passes. No `src/` file is touched by
+- [x] `pnpm verify`, run on-demand, still passes. No `src/` file is touched by
       this spec, so a failure here means something unrelated broke.
 
 ## Implementation plan
