@@ -203,7 +203,7 @@ standard | deep`; the concrete string lives once per runtime.
       under **Files affected**.
 - [x] **Functional test, Claude Code:** delegate a git commit and confirm
       `git-ops` still fires with its tier's model.
-- [ ] **Functional test, opencode:** open this repo with `opencode`, ask for a
+- [x] **Functional test, opencode:** open this repo with `opencode`, ask for a
       read-only review, and confirm `reviewer` is actually available and
       invoked. This is the criterion that proves the original bug is fixed —
       it must be run for real, not assumed.
