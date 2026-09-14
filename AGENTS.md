@@ -119,6 +119,7 @@ The whole point of the scaffold is this boundary.
 | Navigation                                     | `src/utils/navigation.ts`                                                                                                                                                                      | Brief (§ nav spec)                         |
 | `lang` / locale                                | `src/layouts/MainLayout.astro` (`<html lang>`)                                                                                                                                                 | Default `es-CO`                            |
 | Pages                                          | `src/pages/*.astro`                                                                                                                                                                            | Brief (§ sitemap)                          |
+| Model per role (subagent tier→model)           | `harness/runtimes/*.json` (`tiers` map, per runtime) · `agents/*.md` (`tier:` field, never a raw model string)                                                                                | Scaffold-level, not per-client — see `harness/README.md` |
 
 > **Colors** live **only** in `global.css` because Tailwind 4 reads them there
 > to generate utilities. Never mirror colors into a `.ts` file — that creates
@@ -239,28 +240,35 @@ and the `seo-guide-lines` checklist in `CHECKPOINTS.md`. `pnpm verify` is an
 on-demand gate the user can request at any point (e.g. before production) —
 see `CHECKPOINTS.md` for the pre-production checklist.
 
-## Orchestration model (Claude Code subagents)
+## Orchestration model
 
-> Claude Code-specific (the `Skill`-tool invocation part of **Animation
-> strategy** below is too; the strategy decision itself is agent-agnostic).
-> Other coding agents can ignore the subagent-routing parts and do the work
-> directly.
+> The specialists are generated for the runtimes that support them — today
+> **Claude Code** and **opencode** (see `harness/bind-runtime.sh` and
+> `harness/README.md`). The `Skill`-tool invocation part of **Animation
+> strategy** below is Claude-Code-specific too; the strategy decision itself
+> is agent-agnostic. Other coding agents (with no generated agent directory)
+> can ignore the subagent-routing parts and do the work directly.
 
 **The main session is the _orchestrator_.** Its job is to understand the
 request, classify it, decide **delegate vs. handle inline**, route delegated
 work to the right specialist subagent, and synthesize the results — not to do
-all the heavy lifting itself. The specialists live in `.claude/agents/` and
-travel with every clone.
+all the heavy lifting itself. The specialists are authored once in `agents/`
+and generated per runtime (`.claude/agents/` for Claude Code, `.opencode/agent/`
+for opencode) by `harness/bind-runtime.sh` — both generated outputs are
+committed, so they travel with every clone.
 
 ### Orchestrator model — recommended, not forced
 
-- **Default: Sonnet.** Routing, delegate-vs-inline decisions, and light inline
-  work are not "Opus-hard", and the specialists already run on cheaper models
-  (see table) — an Opus orchestrator would be the single most expensive part of
-  every session for a small-business landing site.
-- **Escalate to Opus manually** (`/model opus`) only for genuinely hard work
-  that stays in the main session: ambiguous architecture, complex planning, or
-  advanced Three.js/shader work `coder` flags back up.
+- **Default: tier `standard`.** Routing, delegate-vs-inline decisions, and
+  light inline work are not `deep`-tier-hard, and the specialists already run
+  on cheaper tiers (see table) — a `deep`-tier orchestrator would be the
+  single most expensive part of every session for a small-business landing
+  site.
+- **Escalate to tier `deep` manually** — using whatever model-switching
+  command your runtime provides — only for genuinely hard work that stays in
+  the main session: ambiguous architecture, complex planning, or advanced
+  Three.js/shader work `coder` flags back up. See `harness/runtimes/*.json`
+  for what tier `deep` resolves to on your runtime.
 - This is a **recommendation**, not a hard pin. The scaffold ships **no**
   `.claude/settings.json` forcing a model, so each clone/user keeps their own
   preference. Don't add one just to enforce this.
@@ -282,13 +290,13 @@ isolation. Route accordingly:
 
 ### Routing table — one specialist per request type
 
-| Request type                                                                          | Delegate to  | Model  |
-| ------------------------------------------------------------------------------------- | ------------ | ------ |
-| git: stage, commit, push, open a PR                                                   | `git-ops`    | haiku  |
-| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` | haiku  |
-| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work (no image)  | `coder`      | sonnet |
-| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   | sonnet |
-| web research, external documentation (Context7), browsing with agent-browser          | `research`   | sonnet |
+| Request type                                                                          | Delegate to  | Tier     |
+| ------------------------------------------------------------------------------------- | ------------ | -------- |
+| git: stage, commit, push, open a PR                                                   | `git-ops`    | fast     |
+| save or recall memory/context/past decisions (Engram)                                 | `memory-ops` | fast     |
+| bug fix, CSS/Tailwind tweak, isolated component, new feature, visual work (no image)  | `coder`      | standard |
+| multi-file refactor, PR/code review, architecture decisions                           | `reviewer`   | standard |
+| web research, external documentation (Context7), browsing with agent-browser          | `research`   | standard |
 
 ### Non-negotiables
 
@@ -356,6 +364,7 @@ must land in the *same* change once implementation starts.
 | Add/rename a config file in `src/config/`           | **Config** section · **Knobs map**                                                                                                                                                                                                                          |
 | Add a new font slot                                 | the 3 font files (see Knobs map)                                                                                                                                                                                                                            |
 | Change folder conventions                           | **Components** section · the structure note in `front-end-astro` SKILL.md                                                                                                                                                                                   |
+| Add or change a subagent role, its tier, or add a runtime | `agents/<role>.md` · `harness/runtimes/*.json` · re-run `bind-runtime.sh` for **every** runtime · commit the regenerated output · **Orchestration model** routing table |
 
 > **Not a gotcha (verify before you assume it is one):** `front-end-astro`
 > already detects GSAP dynamically — its Step 1 reads `package.json` and

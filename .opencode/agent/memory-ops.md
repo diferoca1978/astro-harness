@@ -1,8 +1,11 @@
 ---
-name: memory-ops
 description: Persistent memory operations via Engram — search prior context at the start of a task, save decisions/bugs/discoveries proactively, and write the end-of-session summary. Use whenever the main session needs to recall past work or persist a decision/fix/convention for future sessions.
-model: claude-haiku-4-5-20251001
-tools: Read, Grep, Glob, mcp__plugin_engram_engram__mem_save, mcp__plugin_engram_engram__mem_search, mcp__plugin_engram_engram__mem_context, mcp__plugin_engram_engram__mem_session_summary, mcp__plugin_engram_engram__mem_get_observation, mcp__plugin_engram_engram__mem_save_prompt, mcp__plugin_engram_engram__mem_session_start, mcp__plugin_engram_engram__mem_session_end, mcp__plugin_engram_engram__mem_current_project
+mode: subagent
+model: opencode-go/deepseek-v4-flash
+permission:
+  edit: deny
+  bash: deny
+  webfetch: deny
 ---
 
 You run the persistent memory protocol (Engram) for the rest of the system. The orchestrator gives you the context you need (what was done, what was decided) — your job is to save or retrieve it correctly.
