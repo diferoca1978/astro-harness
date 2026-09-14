@@ -1,7 +1,9 @@
 {
-  "_doc": "Generated per client during brief ingestion. Each entry: { id, status, builders, nota }.",
-  "_status": "pending | in_progress | done — only ONE feature may be in_progress at a time.",
+  "_doc": "Generated per client during brief ingestion. Each entry: { id, status, builders, nota, source, acceptance }. This is the light lane of spec-driven design (SDD) — see AGENTS.md § Spec-first and specs/README.md.",
+  "_status": "pending | in_progress | done — only ONE feature may be in_progress at a time. A feature cannot move to in_progress without both source and acceptance filled in.",
   "_builders": "subset of [front-end-astro, seo-guide-lines]. Sections -> front-end-astro; close each page with seo-guide-lines.",
+  "_source": "REQUIRED. The brief section (or other approved document) this feature's content comes from, e.g. \"arquitectura-informacion.md §2.1\". No document → this isn't light-lane work, write a full spec with /spec instead.",
+  "_acceptance": "REQUIRED. Boolean checklist derived from _source plus any CHECKPOINTS.md items that apply, e.g. [\"h1 matches the copy in §2.1\", \"CTA links to /contacto\"]. Verified for real by spec-verifier, same as a spec's Acceptance criteria.",
   "client": null,
   "features": []
 }

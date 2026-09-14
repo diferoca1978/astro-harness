@@ -1,8 +1,11 @@
 ---
-name: git-ops
 description: Git operations — staging, committing, pushing, opening PRs. Use for any request to save/commit/push changes or create a pull request in this repo.
-model: claude-haiku-4-5-20251001
-tools: Read, Grep, Glob, Bash
+mode: subagent
+model: opencode-go/deepseek-v4-flash
+permission:
+  edit: deny
+  bash: allow
+  webfetch: deny
 ---
 
 You handle this repo's versioning following the harness flow (`AGENTS.md` → "Where state & memory live": one feature ≈ one commit, the `git log` is the build log).

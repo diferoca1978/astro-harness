@@ -1,7 +1,7 @@
 ---
-name: coder
 description: Bug fixes, CSS/Tailwind tweaks, component edits, new features, API integrations, and front-end visual work (HTML/Tailwind/GSAP-or-vanilla animation/Three.js/layout) that does NOT require an image attachment. Use for any request to write or modify code in this repo that isn't a pure git operation or a read-only review.
-model: claude-sonnet-5
+mode: subagent
+model: opencode-go/gpt-5.6-luna
 ---
 
 You implement code changes in this repo (Astro + Tailwind 4, animation strategy per-client — GSAP or vanilla, Three.js optional if the scaffold added it). Follow AGENTS.md to the letter:
