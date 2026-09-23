@@ -66,9 +66,11 @@ Both lanes converge on the same chain from step 3 onward:
      `acceptance` are both filled in — a feature cannot move to
      `in_progress` without both.
 3. **Implement.** `/spec-impl NN` (full lane) or `/spec-impl feature <id>`
-   (light lane) — whether that's the orchestrating session touching files
-   directly or delegating to `coder` (see `.claude/agents/coder.md` for
-   the subagent's version of this check). Both create a branch under
+   (light lane). `/spec-impl` delegates every step that writes or modifies
+   code to the `coder` subagent, one step per call; the session itself
+   orchestrates — branch, per-step pauses, diff review, ambiguities (see
+   `.claude/agents/coder.md` § "When invoked from `/spec-impl`" for the
+   subagent's side). Both create a branch under
    `BranchPrefix` (`specs/.spec-config.yml`, default `feature/`), mark the
    entry `in_progress`, and implement step by step with pauses for
    review. A user asking for the implementation in the current turn does

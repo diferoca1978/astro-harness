@@ -167,8 +167,12 @@ The whole point of the scaffold is this boundary.
    data.
 4. **Verify, then mark done** → run `spec-verifier` in feature mode against
    the entry's `acceptance` checklist (see "Spec-first" below), then set
-   the feature to `status: "done"` in `feature_list.json` and commit (the
+    the feature to `status: "done"` in `feature_list.json` and commit (the
    git log is the build log — see _Where state & memory live_).
+
+Implementation of both lanes is orchestrated by `/spec-impl`, which delegates
+each code-writing step to the `coder` subagent one step per call and keeps the
+branch, diff review, pauses, and ambiguity handling in the main session.
 
 `pnpm verify` (build + astro check + customization lint) is **not** run as a
 default step in this loop — only run it when the user explicitly asks for it.
@@ -365,6 +369,7 @@ must land in the *same* change once implementation starts.
 | Add a new font slot                                 | the 3 font files (see Knobs map)                                                                                                                                                                                                                            |
 | Change folder conventions                           | **Components** section · the structure note in `front-end-astro` SKILL.md                                                                                                                                                                                   |
 | Add or change a subagent role, its tier, or add a runtime | `agents/<role>.md` · `harness/runtimes/*.json` · re-run `bind-runtime.sh` for **every** runtime · commit the regenerated output · **Orchestration model** routing table |
+| Change a workflow skill or agent (`.claude/skills/spec*`, `agents/*`, `.claude/agents/*`, `.opencode/agent/*`) | **Development workflow** / **Orchestration model** above · `specs/README.md` § "Workflow" |
 
 > **Not a gotcha (verify before you assume it is one):** `front-end-astro`
 > already detects GSAP dynamically — its Step 1 reads `package.json` and
