@@ -34,13 +34,7 @@ marker 'lang="en"'                 'lang still "en" (set the client locale in Ma
 marker 'example\.com'              'placeholder site URL example.com (set per client / provisioning script)'
 marker 'Nueva web app'             'placeholder hero copy "Nueva web app"'
 marker 'My Website|My Site'        'placeholder English SEO title/description'
-marker '>NavBar<'                  'Navbar stub (<h1>NavBar</h1>)'
-marker '>Footer<'                  'Footer stub (<h1>Footer</h1>)'
-marker 'Summary Section'           'Summary stub'
-marker 'Service Card Component'    'ServiceCard stub'
-marker 'form component'            'ContactForm stub'
-marker '>CTA<'                     'Cta stub'
-marker '>Services<'                'Services stub'
+marker '>[Ff]ooter<'               'Footer stub'
 
 echo ""
 if [ "$found" -eq 0 ]; then
