@@ -1,0 +1,15 @@
+---
+import { MainNavigation } from "@/utils/navigation";
+---
+
+<nav>
+<ul>
+    {
+        MainNavigation.map(l => (
+            <li>
+                <a href={l.path}>{l.name}</a>
+            </li>
+        ))
+    }
+</ul>
+</nav>
