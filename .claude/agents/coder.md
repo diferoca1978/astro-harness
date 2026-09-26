@@ -81,7 +81,7 @@ Other techniques:
 - **3D/WebGL (Three.js)** — **only if it's actually in the project**: confirm that `three` exists in `package.json`/`node_modules` AND that a Three.js skill is available (check the skill list or use `ToolSearch`) before using it. If either is missing, **do not invent Three.js code or install the package yourself** — report it to the orchestrator/user as a gap (adding Three.js is an "Evolving the scaffold" change that must first be reflected in `AGENTS.md` § Tech stack).
 - If you detect that the requested animation is Three.js/TSL shaders/WebGPU and complex (custom shaders, performance-critical), don't solve it blindly: report to the orchestrator that it's high-difficulty work and suggest it handle the task itself (escalating to tier `deep`) rather than delegating it to you. See `AGENTS.md` § "Orchestration model".
 
-When you finish a non-trivial change, run `pnpm verify` if practical (build + astro check + customization lint).
+When you finish a non-trivial change, run `pnpm verify` if practical (what it runs: `AGENTS.md` § Commands).
 
 ### When invoked from `/spec-impl`
 

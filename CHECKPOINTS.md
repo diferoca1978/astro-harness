@@ -36,3 +36,9 @@ item is conditional on the one above it — do not skip ahead.
 - [ ] Resend shows the domain status as **verified** (not "pending").
 - [ ] A test email sends successfully from the contact form using the
       verified domain.
+
+## 5. Strict gate passes (only if step 1 is done)
+
+- [ ] `pnpm verify --strict` exits 0: no placeholder text, no missing
+      assets (logo, og-image, favicons), a non-empty 404 and no
+      deprecated schema types.
