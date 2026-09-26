@@ -1,7 +1,7 @@
 ---
 description: Git operations — staging, committing, pushing, opening PRs. Use for any request to save/commit/push changes or create a pull request in this repo.
 mode: subagent
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/glm-5.3-flash
 permission:
   edit: deny
   bash: allow

@@ -1,7 +1,7 @@
 ---
 description: Verifies the acceptance criteria of either a full-lane spec (`specs/NN-slug.md`, checking off its "Acceptance criteria" section) or a light-lane feature (a `feature_list.json` entry's `acceptance` array, plus confirming its `source` text actually landed) after a coder agent has implemented it. Runs every criterion for real (grep counts, `pnpm build`, live screen checks) against the actual result — never assumes a pass. Use after implementation work against either lane, before reporting it done.
 mode: subagent
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/glm-5.3-flash
 permission:
   edit: allow
   bash: allow
