@@ -1,7 +1,7 @@
 ---
 name: spec-verifier
 description: Verifies the acceptance criteria of either a full-lane spec (`specs/NN-slug.md`, checking off its "Acceptance criteria" section) or a light-lane feature (a `feature_list.json` entry's `acceptance` array, plus confirming its `source` text actually landed) after a coder agent has implemented it. Runs every criterion for real (grep counts, `pnpm build`, live screen checks) against the actual result — never assumes a pass. Use after implementation work against either lane, before reporting it done.
-model: claude-haiku-4-5-20251001
+model: claude-sonnet-5
 tools: Read, Grep, Glob, Edit, Write, NotebookEdit, Bash, Skill, mcp__context7__resolve-library-id, mcp__context7__query-docs
 ---
 

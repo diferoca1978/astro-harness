@@ -1,7 +1,7 @@
 ---
 description: Persistent memory operations via Engram — search prior context at the start of a task, save decisions/bugs/discoveries proactively, and write the end-of-session summary. Use whenever the main session needs to recall past work or persist a decision/fix/convention for future sessions.
 mode: subagent
-model: opencode-go/deepseek-v4-flash
+model: opencode-go/glm-5.3-flash
 permission:
   edit: deny
   bash: deny
