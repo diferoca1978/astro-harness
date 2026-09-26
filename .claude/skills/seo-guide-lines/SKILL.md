@@ -1,7 +1,7 @@
 ---
 name: seo-guide-lines
 description: |
-  Optimize websites for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization) in the 2026 AI era. Use this skill whenever the user mentions: SEO optimization, meta tags, schema markup, structured data, Google rankings, featured snippets, AI search visibility, OpenGraph tags, site performance, keyword optimization, content structure for search engines, or wants to improve their website's discoverability. Also trigger when users ask to create service pages, about pages, contact pages, or any page that needs SEO setup, or when they mention ChatGPT/Perplexity/AI citations.
+  Optimize websites for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization) in the 2026 AI era. Use this skill whenever the user mentions: SEO optimization, meta tags, schema markup, structured data, Google rankings, AI search visibility, OpenGraph tags, site performance, keyword optimization, content structure for search engines, or wants to improve their website's discoverability. Also trigger when users ask to create service pages, about pages, contact pages, or any page that needs SEO setup, or when they mention ChatGPT/Perplexity/AI citations.
 compatibility:
   required_tools:
     - Read
@@ -16,7 +16,7 @@ compatibility:
 You are an expert in modern SEO optimization for the AI era (2026+), covering three critical disciplines:
 
 - **SEO**: Traditional search engine optimization (Google, Bing rankings)
-- **AEO**: Answer Engine Optimization (featured snippets, voice search, "People Also Ask")
+- **AEO**: Answer Engine Optimization (direct answers, voice search, "People Also Ask")
 - **GEO**: Generative Engine Optimization (ChatGPT, Perplexity, Claude citations)
 
 ## Core Reference
@@ -42,12 +42,12 @@ Use this skill when the user asks to:
 - ✅ Optimize a page for SEO/search engines
 - ✅ Add or improve meta tags, Open Graph, Twitter cards
 - ✅ Implement schema markup (JSON-LD)
-- ✅ Create FAQ schemas for featured snippets
+- ✅ Add FAQPage schema to a visible FAQ section
 - ✅ Improve content for AI citations (ChatGPT, Perplexity)
 - ✅ Structure content for E-E-A-T (Experience, Expertise, Authority, Trust)
 - ✅ Create service pages, about pages, or contact pages with SEO
 - ✅ Audit existing pages for SEO issues
-- ✅ Set up `COMPANY_INFO` or `MAIN_KEYWORDS` configuration
+- ✅ Set up `COMPANY_INFO` configuration
 - ✅ Implement breadcrumbs or sitemaps
 - ✅ Configure robots.txt for non-Astro projects (in Astro, robots.txt is generated at build time — no manual file needed)
 - ✅ Set up hreflang tags or multi-language / international SEO
@@ -92,7 +92,7 @@ Then identify what the user needs:
 
 - **New page creation?** → Use the appropriate Pattern (1-5) from the guide
 - **Existing page optimization?** → Audit current implementation
-- **Configuration setup?** → Help with `COMPANY_INFO` or `MAIN_KEYWORDS`
+- **Configuration setup?** → Help with `COMPANY_INFO`
 - **Schema markup?** → Use generators from `src/config/seo.ts`
 
 ### Step 2: Locate Relevant Files
@@ -117,13 +117,13 @@ Based on the user's request and the SEO guide patterns:
 1. Choose the correct pattern from the guide (Service, Homepage, About, Projects, Contact)
 2. Copy the template code
 3. Replace `[placeholders]` with actual company data from `COMPANY_INFO`
-4. Implement required schemas (Service, FAQ, Breadcrumb, etc.)
+4. Add only the schemas that describe what the page shows (`generateBreadcrumbSchema()`; `generateFAQSchema()` only for a visible FAQ section)
 5. Structure content following GEO principles (self-contained chunks, natural language)
 
 **For Existing Pages:**
 
 1. Audit current implementation:
-   - Does it use `generateDynamicSEO()`?
+   - Does it use `generatePageSEO()` with its own `title` and `description`?
    - Are schemas implemented?
    - Is content structured for AEO (FAQ format, direct answers)?
    - Does it demonstrate E-E-A-T?
@@ -132,7 +132,7 @@ Based on the user's request and the SEO guide patterns:
 
 **For Configuration:**
 
-1. Read current `COMPANY_INFO` and `MAIN_KEYWORDS`
+1. Read current `COMPANY_INFO`
 2. Validate data completeness (NAP consistency critical!)
 3. Suggest improvements based on industry best practices from the guide
 
@@ -143,7 +143,7 @@ After making changes, verify:
 **Schema Validation:**
 
 - Ensure all schemas are valid JSON-LD
-- Recommend user test at: https://validator.schema.org/
+- Before closing a page, validate its JSON-LD with Google's **Rich Results Test** (https://search.google.com/test/rich-results) and the **Schema Markup Validator** (https://validator.schema.org/). A pass means the markup is valid, not that Google will show a rich result.
 
 **SEO Checklist:**
 
@@ -154,13 +154,13 @@ After making changes, verify:
 - [ ] H3s capture long-tail variants and consideration-stage queries (e.g. "how much does X cost?", "X vs Y differences")
 - [ ] Heading hierarchy is logical (H1 → H2 → H3), never skipped
 - [ ] Images have descriptive alt text
-- [ ] At least one schema (Organization, Service, FAQ, etc.)
+- [ ] Schemas describe only what is visible and true on the page (Organization + WebSite come from `MainLayout` — don't add them again)
 - [ ] Breadcrumb schema on non-homepage pages
 - [ ] Internal links with descriptive anchor text
 
 **AEO Checklist:**
 
-- [ ] FAQ schema implemented where applicable
+- [ ] FAQPage schema only where a visible FAQ section exists, with questions from `faqs.ts` or the brief
 - [ ] Questions formatted naturally ("What is...", "How does...")
 - [ ] Direct answers in first 50-100 words
 - [ ] Lists, tables, or structured data for easy extraction
@@ -176,8 +176,6 @@ After making changes, verify:
 
 Understanding this dynamic prevents misplaced priorities:
 
-- **95% of users go ChatGPT → Google** to finalize decisions (SimilarWeb 2026). Only 18% do the reverse. Google is the transaction validator; LLMs are the presale consultants.
-- **75% correlation** between Google Top 10 and LLM citations. LLMs use RAG (Retrieval-Augmented Generation) to pull from the web — so **ranking in Google IS the prerequisite for being cited by AI**.
 - Consequence: GEO is not a separate discipline. Traditional SEO is the raw material that feeds generative answers. Do not sacrifice technical SEO fundamentals for "AI optimization."
 
 ## Key Principles from the Guide
@@ -187,23 +185,23 @@ Understanding this dynamic prevents misplaced priorities:
 Never hardcode company data. Always import from `COMPANY_INFO`:
 
 ```typescript
-import { COMPANY_INFO, MAIN_KEYWORDS } from "@/config/seo";
+import { COMPANY_INFO } from "@/config/seo";
 
 // ✅ CORRECT
 <p>Phone: {COMPANY_INFO.phone}</p>
 
 // ❌ WRONG
-<p>Phone: +57 321 503 7097</p>
+<p>Phone: [hardcoded phone number]</p>
 ```
 
-### 2. Schema Markup is Mandatory
+### 2. Schema Markup Must Describe the Page
 
-Every page needs at least one JSON-LD schema:
+A JSON-LD schema goes on a page only when it describes something visible and true on that page. Never add one to chase a rich result, and never fill one with data the page doesn't show:
 
-- **Homepage**: `ORGANIZATION_SCHEMA` + `WEBSITE_SCHEMA`
-- **Service Pages**: `generateServiceSchema()` + `generateFAQSchema()` + `generateBreadcrumbSchema()`
-- **About Page**: `generatePersonSchema()` + `generateBreadcrumbSchema()`
-- **Contact Page**: `LocalBusiness` schema + `generateBreadcrumbSchema()`
+- **Every page**: `MainLayout.astro` already appends `ORGANIZATION_SCHEMA` + `WEBSITE_SCHEMA` — don't add them again. Pass extra schemas through `<MainLayout seoProps={…} schemas={[…]}>`.
+- **Non-home pages**: `generateBreadcrumbSchema()`, matching the page's real path.
+- **Visible FAQ section**: `generateFAQSchema()`, built from the same questions and answers the section renders, taken from `faqs.ts` or the brief — never invented.
+- **A real person shown on the page**: `generatePersonSchema()`, only with data from `authorBio.ts` or the brief.
 
 ### 3. E-E-A-T is Critical for GEO
 
@@ -267,7 +265,7 @@ Even small differences ("Suite 200" vs "Ste 200") hurt local rankings.
 ### Task: Create a New Service Page
 
 1. Read the guide's **Pattern 1** (Service Page Template)
-2. Read `COMPANY_INFO` and `MAIN_KEYWORDS` from `src/config/seo.ts`
+2. Read `COMPANY_INFO` from `src/config/seo.ts`
 3. Copy the Pattern 1 template
 4. Replace all `[placeholders]` with actual data
 5. Implement required schemas
@@ -290,11 +288,10 @@ Even small differences ("Suite 200" vs "Ste 200") hurt local rankings.
 
 ### Task: Implement FAQ Schema
 
-1. Identify relevant questions for the page topic
-2. Write 50-100 word answers with specifics
-3. Create FAQ schema using `generateFAQSchema()`
-4. Add FAQ section to page HTML
-5. Include schema in page schemas array
+1. Take the questions and answers from `faqs.ts` or the brief — never invent them. If neither has them, record the gap in `client-gaps.md` instead of writing FAQs.
+2. Render them in a visible FAQ section on the page
+3. Build the schema with `generateFAQSchema()` from the same data, so the FAQPage JSON-LD matches the visible text
+4. Include the schema in the page's `schemas` array
 
 ## Output Format
 
@@ -311,7 +308,7 @@ When making changes, always:
 ### ⚠️ Never Do This:
 
 1. **Don't hardcode company data** - Always use `COMPANY_INFO`
-2. **Don't skip schemas** - Every page needs JSON-LD markup
+2. **Don't add schemas the page doesn't back** - Each schema must describe something visible and true on the page
 3. **Don't keyword stuff** - Use natural, conversational language
 4. **Don't create duplicate content** - Each page must be unique
 5. **Don't ignore mobile** - Always mobile-first design

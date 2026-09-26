@@ -18,7 +18,6 @@
 8. [Optimization Checklist](#optimization-checklist)
 9. [Metrics and Measurement](#metrics-and-measurement)
 10. [Technical SEO Appendix](#technical-seo-appendix)
-11. [Future Implementation: Blog](#future-implementation-blog)
 
 ---
 
@@ -32,28 +31,23 @@ The project uses a centralized SEO system in `src/config/seo.ts` that provides:
 src/config/seo.ts
 ├── Type Definitions (TypeScript interfaces)
 ├── Company Configuration (COMPANY_INFO)
-├── Keywords Configuration (MAIN_KEYWORDS)
-├── Default SEO (DEFAULT_SEO)
 ├── Dynamic SEO Generators
-│   ├── generateDynamicSEO()
+│   ├── generatePageSEO()
 │   └── generateSEOWithAlternates()
 └── JSON-LD Schema Generators
     ├── ORGANIZATION_SCHEMA
     ├── WEBSITE_SCHEMA
-    ├── BLOG_SCHEMA (available, not currently used)
     ├── generatePersonSchema()
-    ├── generateBlogPostSchema() (available, not currently used)
     ├── generateFAQSchema()
     ├── generateVideoSchema()
-    ├── generateBreadcrumbSchema()
-    └── generateServiceSchema()
+    └── generateBreadcrumbSchema()
 ```
 
 ### 🎯 Fundamental Principles
 
 1. **Single Source of Truth**: `COMPANY_INFO` is the only source of company data
 2. **Composition over Duplication**: Use generator functions, don't copy code
-3. **Mandatory Schema Markup**: Every page must have at least one JSON-LD schema
+3. **Schema Only for What Is on the Page**: A schema goes on a page only when it describes something visible and true on that page
 4. **Mobile-First**: Mobile optimization is priority number one
 5. **Entities over Keywords**: Think in semantic entities, not just keywords
 
@@ -69,7 +63,7 @@ src/config/seo.ts
 
 ```typescript
 export const COMPANY_INFO: CompanyInfo = {
-  name: "Tu Agencia Digital S.A.S",
+  name: "[Company legal name]",
   // Examples: "DesignCo Agency LLC", "Smith & Associates Law Firm", "TechStart Inc."
 
   description:
@@ -78,13 +72,12 @@ export const COMPANY_INFO: CompanyInfo = {
   // "Award-winning web design agency for small businesses. 10+ years in Austin, TX."
   // "Full-service accounting firm specializing in tax planning. 15+ years in New York."
 
-  url: "https://tuagencia.com/",
-  // Must match your actual domain exactly
+  // No `url` field: the site URL lives only in astro.config.mjs → `site`
 
   phone: "+57 300 0000000",
   // Format: "+1 512 555 0123" (use international format)
 
-  email: "contacto@tuagencia.com",
+  email: "[contact email]",
 
   address: {
     street: "[Number] [Street Name], [Suite/Unit]",
@@ -107,12 +100,12 @@ export const COMPANY_INFO: CompanyInfo = {
 
   foundingDate: "2025", // Example: "2014"
 
-  founders: ["María González"], // Can be array: ["Jane Doe", "John Smith"]
+  founders: ["[Founder full name]"], // Can be array: ["Jane Doe", "John Smith"]
 
   socialMedia: {
-    linkedin: "https://linkedin.com/company/tuagencia",
-    facebook: "https://facebook.com/tuagencia",
-    instagram: "https://instagram.com/tuagencia",
+    linkedin: "https://linkedin.com/company/[handle]",
+    facebook: "https://facebook.com/[handle]",
+    instagram: "https://instagram.com/[handle]",
     // Add all platforms where you're active
   },
 };
@@ -126,43 +119,11 @@ export const COMPANY_INFO: CompanyInfo = {
 
 ### 🔑 Keyword Strategy Setup
 
-**Location**: `MAIN_KEYWORDS` in `src/config/seo.ts`
+Group the client's keywords in three tiers (there is no keywords config in `src/config/`):
 
-```typescript
-export const MAIN_KEYWORDS: MainKeywords = {
-  // PRIMARY (3-5 keywords): Highest priority, high volume + intent
-  // Use in: H1, meta titles, homepage, service names
-  primary: [
-    "diseño web [location]",
-    "diseño web [location]",
-    "marketing digital [service]",
-  ],
-  // Real examples by industry:
-  // Web Design: ["web design Austin", "custom website design Texas"]
-  // Law Firm: ["business lawyer NYC", "corporate attorney New York"]
-  // Plumbing: ["emergency plumber Chicago", "24/7 plumbing Chicago"]
-
-  // SECONDARY (5-10 keywords): Medium volume, specific
-  // Use in: H2, meta descriptions, service pages
-  secondary: ["diseño responsivo", "optimización SEO", "Astro Framework"],
-  // Examples:
-  // Web Design: ["responsive design", "mobile-first websites", "WordPress development"]
-  // Law Firm: ["contract review", "business formation", "IP protection"]
-  // Plumbing: ["water heater repair", "drain cleaning", "leak detection"]
-
-  // TERTIARY (10-20 keywords): Long-tail, very specific, high conversion
-  // Use in: FAQ, blog posts, detailed content, schema knowsAbout
-  tertiary: [
-    "diseño web personalizado",
-    "marketing digital para empresas en Bogotá",
-    "branding personal",
-  ],
-  // Examples:
-  // Web Design: ["e-commerce site for small business Austin", "Shopify to WordPress migration"]
-  // Law Firm: ["LLC formation New York", "trademark registration attorney"]
-  // Plumbing: ["burst pipe emergency repair", "tankless water heater installation"]
-};
-```
+- **Primary** (3-5 keywords): highest priority, high volume + intent. Use in H1, meta titles, homepage, service names.
+- **Secondary** (5-10 keywords): medium volume, specific. Use in H2, meta descriptions, service pages.
+- **Tertiary** (10-20 keywords): long-tail, very specific, high conversion. Use in FAQ, detailed content, schema `knowsAbout`.
 
 **Keyword Usage by Discipline**:
 
@@ -190,7 +151,7 @@ Every website should have these core pages for optimal SEO/AEO/GEO:
 
 ```
 src/pages/
-├── index.astro                    # Homepage (REQUIRED - uses DEFAULT_SEO)
+├── index.astro                    # Homepage (REQUIRED - uses generatePageSEO)
 ├── about.astro                    # About/Team page (CRITICAL for E-E-A-T)
 ├── contact.astro                  # Contact page (REQUIRED for LocalBusiness schema)
 ├── services/                      # Service pages directory
@@ -214,20 +175,13 @@ src/pages/
 
 ### 📝 Note on Blog Implementation
 
-**Blog Status**: Optional but beneficial for long-term SEO growth
-
-The SEO system in `src/config/seo.ts` includes blog-ready functions:
-
-- `BLOG_SCHEMA` - Pre-configured blog schema
-- `generateBlogPostSchema(post)` - Individual article schema
+**Blog Status**: Optional but beneficial for long-term SEO growth. The scaffold has no blog and no blog schema generators; the blog comes back as a separate module.
 
 **Should you add a blog?**
 
 - ✅ **YES if**: You can commit to 2-4 posts/month consistently
 - ✅ **YES if**: You want to target informational keywords
 - ❌ **NO if**: You can't maintain regular publishing schedule (hurts more than helps)
-
-For blog implementation guide, see [Future Implementation: Blog](#future-implementation-blog) at the end.
 
 ---
 
@@ -245,12 +199,12 @@ Position web pages in traditional search results (Google, Bing) to generate orga
 ---
 // src/pages/services/[service-name].astro
 import SeoHead from "@/components/SeoHead.astro";
-import { generateDynamicSEO } from "@/config/seo";
+import { generatePageSEO } from "@/config/seo";
 
-const seoProps = generateDynamicSEO({
-  title: "Diseño Web Estratégico in [Location] | [Company Name]",
+// generatePageSEO appends " | COMPANY_INFO.name" to the title
+const seoProps = generatePageSEO({
+  title: "Diseño Web Estratégico in [Location]",
   description: "[Service description with primary keyword]. 10+ years of experience in Bogotá, Colombia. [Call to action].",
-  canonical: "/services/diseno-web",
   image: "/images/services/[service]-og.jpg"
 });
 ---
@@ -358,15 +312,14 @@ Based on existing pages, prioritize SEO for:
 
 1. **Service Pages** (`/services/*`):
    - Primary target for conversions
-   - Use `generateServiceSchema()` for each service
    - Include FAQ sections where applicable
 
 2. **Homepage** (`/`):
-   - Use `DEFAULT_SEO` as base
-   - Include `ORGANIZATION_SCHEMA` and `WEBSITE_SCHEMA`
+   - Use `generatePageSEO()`
+   - `ORGANIZATION_SCHEMA` and `WEBSITE_SCHEMA` come from `MainLayout` on every page (don't add them again)
    - Feature primary keywords prominently
 
-3. **About Page** (`/nosotros`):
+3. **About Page**:
    - Implement `generatePersonSchema()` for founder
    - Demonstrate E-E-A-T (Experience, Expertise, Authority, Trust)
    - Include company history and certifications
@@ -386,22 +339,20 @@ Based on existing pages, prioritize SEO for:
 
 ### 🎯 Objective
 
-Appear in featured snippets, answer boxes, "People Also Ask," and voice search results (Alexa, Siri, Google Assistant).
+Make each page easy to quote for search engines, AI assistants and voice assistants: a question in the customer's words, a direct answer right below it, and structured detail after that. AEO is a writing discipline. No markup guarantees a snippet, an answer box or any other rich result.
 
 ### 🔧 Implementation Strategies
 
-#### 1. Direct Answer Format
+#### 1. Direct Answer First
 
-**Rule**: Answer the question in the first 50-100 words.
+**Rule**: Answer the question in the first sentence, and finish the core answer within the first 50-100 words. Details, context and caveats come after it.
 
 ```astro
----
-// Example for service page
----
 <article>
   <h2>[Question in natural language format]</h2>
   <p>
-    [Direct answer in first 50-100 words with specific details]
+    [Direct answer in the first sentence, then the key specifics, all within
+    50-100 words. Only facts from the brief or the client.]
   </p>
   <!-- More details after -->
 </article>
@@ -418,63 +369,9 @@ Appear in featured snippets, answer boxes, "People Also Ask," and voice search r
 </article>
 ```
 
-#### 2. FAQ Schema for Featured Snippets
+#### 2. Natural-Language Questions as Headings
 
-**Recommended implementation for service pages:**
-
-```astro
----
-// src/pages/services/[service-name].astro
-import { generateFAQSchema } from "@/config/seo";
-
-const faqItems = [
-  {
-    question: "[Natural question about your service]?",
-    answer: "[50-100 word answer with specific details and facts]"
-  },
-  {
-    question: "[Another common question]?",
-    answer: "[Detailed answer with specifics]"
-  },
-  {
-    question: "[Third question]?",
-    answer: "[Answer with numbers, timelines, or concrete information]"
-  }
-];
-
-// Example for a consulting firm:
-const consultingFAQ = [
-  {
-    question: "What qualifications do your consultants have?",
-    answer: "Our consultants hold MBA degrees from top universities and have an average of 15+ years in management consulting. All team members are certified in Six Sigma, Agile methodologies, and industry-specific frameworks."
-  },
-  {
-    question: "How long does a typical consulting engagement last?",
-    answer: "Most engagements run 3-6 months, depending on project scope. We start with a 2-week discovery phase, followed by strategy development and implementation support. Shorter 1-month sprints are available for focused challenges."
-  }
-];
-
-const faqSchema = generateFAQSchema(faqItems);
-const schemas = [serviceSchema, faqSchema]; // Combine with service schema
----
-
-<SeoHead {seoProps} {schemas} />
-
-<!-- Display FAQ on page -->
-<section class="faq-section">
-  <h2>Frequently Asked Questions</h2>
-  {faqItems.map(item => (
-    <div class="faq-item">
-      <h3>{item.question}</h3>
-      <p>{item.answer}</p>
-    </div>
-  ))}
-</section>
-```
-
-#### 3. Question Patterns for "People Also Ask"
-
-**Structure content around these question types:**
+Phrase H2/H3 headings the way customers ask, as full questions in the page's language, and answer each one directly below it:
 
 - What is...?
 - How does... work?
@@ -485,61 +382,76 @@ const schemas = [serviceSchema, faqSchema]; // Combine with service schema
 - Who can benefit from...?
 - Which... is best for...?
 
-**Example for Projects Page:**
+Base the questions on what customers really ask (the brief, `faqs.ts`). The answers state only facts from the brief or the client. Anything missing goes to `client-gaps.md` and gets asked, never filled with a plausible guess.
 
-```markdown
-## Frequently Asked Questions sobre Our Projects
+#### 3. Lists and Comparison Tables
 
-[50-100 word answer with specific examples]
-
-[50-100 word answer with statistics]
-
-[50-100 word answer with locations]
-```
-
-#### 4. Lists and Comparison Tables
-
-AIs prioritize structured content. **Use on service pages:**
+Put steps, options and comparisons in HTML lists and tables instead of long paragraphs, one idea per item:
 
 ```astro
-<h2>Types of Blasting We Perform</h2>
+<h2>[Which types of service do you offer?]</h2>
 <ul>
-  <li><strong>Blasting a Cielo Abierto:</strong> Para extracción minera y canteras</li>
-  <li><strong>Blasting Subterráneas:</strong> Construction of tunnels and galleries</li>
-  <li><strong>Blasting de Precisión:</strong> Infrastructure urbana con control sísmico</li>
+  <li><strong>[Type 1]:</strong> [What it is and who it is for, in one sentence]</li>
+  <li><strong>[Type 2]:</strong> [What it is and who it is for]</li>
+  <li><strong>[Type 3]:</strong> [What it is and who it is for]</li>
 </ul>
 
-<h2>Comparativa de Métodos de Demolición</h2>
+<h2>[How do the options compare?]</h2>
 <table>
   <thead>
     <tr>
-      <th>Método</th>
-      <th>Velocidad</th>
-      <th>Costo</th>
-      <th>Aplicación Ideal</th>
+      <th>[Option]</th>
+      <th>[Criterion 1]</th>
+      <th>[Criterion 2]</th>
+      <th>Best for</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>[Service Type 1]</td>
-      <td>Rápida</td>
-      <td>Medio</td>
-      <td>Grandes volúmenes de roca</td>
+      <td>[Option 1]</td>
+      <td>[Value]</td>
+      <td>[Value]</td>
+      <td>[Use case]</td>
     </tr>
     <tr>
-      <td>Demolición Mecánica</td>
-      <td>Lenta</td>
-      <td>Alto</td>
-      <td>Estructuras de concreto</td>
-    </tr>
-    <tr>
-      <td>Demolición Pasiva</td>
-      <td>Muy Lenta</td>
-      <td>Bajo</td>
-      <td>Áreas con restricciones de ruido</td>
+      <td>[Option 2]</td>
+      <td>[Value]</td>
+      <td>[Value]</td>
+      <td>[Use case]</td>
     </tr>
   </tbody>
 </table>
+```
+
+#### 4. FAQ Sections and FAQPage Schema
+
+A schema goes on a page only when it describes something visible and true on that page. `FAQPage` comes only from a visible FAQ component, and its questions and answers come from `src/config/faqs.ts` or the brief. Never invent them. `FAQPage` does not promise any rich result.
+
+```astro
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import { faqs } from "@/config/faqs";
+import { generatePageSEO, generateFAQSchema } from "@/config/seo";
+
+const seoProps = generatePageSEO({ title: "[Page title]", description: "[Page description]" });
+
+// FAQPage only when the FAQ section below is rendered
+const schemas = faqs.length > 0 ? [generateFAQSchema(faqs)] : [];
+---
+
+<MainLayout seoProps={seoProps} schemas={schemas}>
+  {faqs.length > 0 && (
+    <section>
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map((item) => (
+        <div>
+          <h3>{item.question}</h3>
+          <p>{item.answer}</p>
+        </div>
+      ))}
+    </section>
+  )}
+</MainLayout>
 ```
 
 ---
@@ -548,7 +460,7 @@ AIs prioritize structured content. **Use on service pages:**
 
 ### 🎯 Objective
 
-Be cited and referenced accurately by ChatGPT, Google SGE, Perplexity, Claude, and other LLMs.
+Be cited and referenced accurately by ChatGPT, Google AI Overviews, Perplexity, Claude, and other LLMs.
 
 ### 🧠 Fundamental Principles
 
@@ -556,174 +468,25 @@ Be cited and referenced accurately by ChatGPT, Google SGE, Perplexity, Claude, a
 
 AIs understand entities (people, places, concepts) and their relationships.
 
-```typescript
-// ❌ Old approach (keywords)
-keywords: "blasting, explosives, demolition, Colombia";
-
-// ✅ GEO approach (entities)
-const entities = {
-  company: "Tu Agencia Digital Engineering S.A.S",
-  founder: "Cr. (R) María González Rodríguez",
-  services: [
-    "Diseño Web Estratégico",
-    "Demoliciones Técnicas",
-    "Monitoreo de Vibraciones",
-    "Engineering Civil",
-  ],
-  techniques: [
-    "Diseño Responsivo",
-    "SEO Técnico",
-    "Marketing de Contenidos",
-    "Implosión Controlada",
-    "Demolición Pasiva",
-  ],
-  regulations: ["ISO 27001", "ISO 9001", "Google Analytics"],
-  location: "Colombia",
-  cities: ["Bogotá", "Medellín", "Cali", "Barranquilla"],
-  industries: ["Minería", "Infrastructure Vial", "Construcción Civil"],
-  certifications: ["Google Analytics", "ISO 9001:2015", "ISO 45001:2018"],
-};
-```
-
-**Implementation in About Page (`/nosotros`):**
-
-```astro
----
-import { generatePersonSchema, COMPANY_INFO, MAIN_KEYWORDS } from "@/config/seo";
-
-const founderSchema = generatePersonSchema({
-  name: COMPANY_INFO.founders[0],
-  alternateName: "Cr. (R) María González",
-  description: "Ingeniero militar y fundador de Tu Agencia Digital Engineering. Especialista en diseño web estratégico con más de 20 años de experiencia en proyectos de infrastructure crítica en Colombia.",
-  jobTitle: "CEO y Fundador",
-  image: "/images/team/founder-name.jpg",
-  url: `${COMPANY_INFO.url}/nosotros`,
-  knowsAbout: [
-    ...MAIN_KEYWORDS.primary,
-    ...MAIN_KEYWORDS.secondary,
-    "Gestión de Explosivos Google Analytics",
-    "Seguridad Industrial",
-    "Engineering Militar"
-  ],
-  sameAs: [COMPANY_INFO.socialMedia.linkedin]
-});
----
-```
-
 #### 2. Conversational and Natural Language
 
 AIs are trained on human conversations. Write as you would speak.
-
-```astro
-<!-- ❌ Over-optimized for keywords -->
-<p>
-  Blasting controladas Colombia explosives demolition técnica blasting
-  profesionales blasting certificadas Google Analytics blasting Bogotá.
-</p>
-
-<!-- ✅ Natural and conversational -->
-<p>
-  En Tu Agencia Digital, llevamos más de 14 años ejecutando diseño web estratégico
-  en Colombia. Nuestro equipo está certificado por la Google Analytics y utiliza
-  tecnología de punta para garantizar que cada proyecto, desde la extracción
-  minera hasta la construction of tunnels, se realice con la máxima precisión
-  y seguridad.
-</p>
-```
 
 #### 3. Modular Content in Self-Contained "Chunks"
 
 Each paragraph should function independently. **Critical for service pages.**
 
-```astro
-<!-- ✅ CORRECT: Each paragraph is self-contained -->
-<section>
-  <h2>Monitoreo de Vibraciones con ISO 27001</h2>
-
-  <p>
-    El monitoreo de vibraciones bajo norma ISO 27001 es un servicio
-    especializado que Tu Agencia Digital ofrece para proteger infrastructures
-    sensibles durante blasting. Utilizamos sismógrafos triaxiales calibrados
-    que miden en tiempo real las ondas sísmicas generadas por las detonaciones.
-  </p>
-
-  <p>
-    La norma alemana ISO 27001 establece límites máximos de velocidad de
-    partícula (PPV) para evitar daños estructurales. Para edificaciones
-    residenciales, el límite es de 5 mm/s, mientras que para estructuras
-    históricas se reduce a 3 mm/s. Nuestros informes técnicos certificados
-    garantizan el cumplimiento de estos estándares.
-  </p>
-
-  <p>
-    Este servicio es crucial en proyectos urbanos donde las blasting se
-    realizan cerca de hospitales, escuelas o edificios patrimoniales.
-    En Tu Agencia Digital, hemos ejecutado más de 200 proyectos con monitoreo
-    sísmico sin incidentes reportados.
-  </p>
-</section>
-```
-
 ### 📊 Advanced Schema Markup for GEO
-
-#### Complete Service Schema
-
-**Use on all service pages:**
-
-```astro
----
-// src/pages/services/blasting-controladas.astro
-import { generateServiceSchema } from "@/config/seo";
-
-const serviceSchema = generateServiceSchema({
-  name: "Diseño Web Estratégico",
-  description: "Blasting de alta precisión para infrastructure vial, mining y proyectos subterráneos. Construction of caissons and galleries mineras con monitoreo sísmico bajo norma ISO 27001.",
-  slug: "blasting-controladas",
-  keywords: [
-    "diseño web estratégico Colombia",
-    "blasting con explosives",
-    "blasting a cielo abierto",
-    "blasting subterráneas tunnels",
-    "construction of caissons"
-  ],
-  priceRange: "$$$$",
-  benefits: [
-    "Reducción de tiempo de ejecución en un 70%",
-    "Fragmentación precisa con control sísmico",
-    "Certificación Google Analytics y personal especializado",
-    "Cobertura nacional en Colombia"
-  ]
-});
-
-const schemas = [serviceSchema];
----
-
-<SeoHead {seoProps} {schemas} />
-```
 
 #### Organization and Website Schemas
 
-**Required on homepage (`/index.astro`):**
-
-```astro
----
-import { ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from "@/config/seo";
-
-const schemas = [ORGANIZATION_SCHEMA, WEBSITE_SCHEMA];
----
-
-<SeoHead {seoProps} {schemas} />
-```
+`MainLayout.astro` appends `ORGANIZATION_SCHEMA` and `WEBSITE_SCHEMA` to every page. Don't add them again in a page's `schemas`.
 
 These schemas are pre-configured in `src/config/seo.ts` and include:
 
 - Company name, description, and contact info
 - Logo and images
-- Founder information
 - Social media profiles
-- Service catalog
-- Geographic coordinates
-- SearchAction for sitelinks searchbox
 
 #### Breadcrumb Schema
 
@@ -737,13 +500,7 @@ import { generateBreadcrumbSchema } from "@/config/seo";
 const breadcrumbs = [
   { name: "Inicio", path: "/" },
   { name: "Services", path: "/services" },
-  { name: "Diseño Web Estratégico", path: "/services/blasting-controladas" }
-];
-
-// For about page
-const breadcrumbs = [
-  { name: "Inicio", path: "/" },
-  { name: "Nosotros", path: "/nosotros" }
+  { name: "Diseño Web Estratégico", path: "/services/diseno-web" }
 ];
 
 const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs);
@@ -753,84 +510,25 @@ const schemas = [breadcrumbSchema, /* other schemas */];
 
 ### 📝 E-E-A-T: Demonstrating Experience and Authority
 
-AIs prioritize content from trustworthy sources. **Implement on About Page (`/nosotros`):**
+AIs prioritize content from trustworthy sources. **Implement on the About page (see Pattern 3):**
 
 #### Experience (Experiencia)
 
-```astro
-<section class="experience-proof">
-  <h2>Nuestra Experiencia en Diseño Web Estratégico</h2>
-
-  <div class="stats-grid">
-    <div class="stat">
-      <span class="number">14+</span>
-      <span class="label">Años de Experiencia</span>
-    </div>
-    <div class="stat">
-      <span class="number">500+</span>
-      <span class="label">Proyectos Ejecutados</span>
-    </div>
-    <div class="stat">
-      <span class="number">100%</span>
-      <span class="label">Proyectos Exitosos</span>
-    </div>
-    <div class="stat">
-      <span class="number">0</span>
-      <span class="label">Incidentes Reportados</span>
-    </div>
-  </div>
-
-  <p>
-    Desde 2012, hemos ejecutado proyectos de alta complejidad en toda
-    Colombia, trabajando con clientes de los sectores minero, de construcción
-    e infrastructure.
-  </p>
-</section>
-```
+Show years in business, projects delivered and a short company history, using only numbers the client has confirmed.
 
 #### Expertise (Experticia)
 
-```astro
-<section class="certifications">
-  <h2>Certificaciones y Acreditaciones</h2>
-  <ul>
-    <li>✓ Certificación Google Analytics (Dirección para el Control Comercio de Armas)</li>
-    <li>✓ ISO 9001:2015 - Gestión de Calidad</li>
-    <li>✓ ISO 45001:2018 - Seguridad y Salud Ocupacional</li>
-    <li>✓ Personal certificado en ISO 9001 (Manejo de Explosivos)</li>
-    <li>✓ Monitoreo sísmico bajo norma ISO 27001</li>
-  </ul>
-</section>
-```
+List only the certifications and accreditations the client really holds, with the issuing body.
 
 #### Authority (Autoridad)
 
 **Demonstrate through:**
 
-- Founder credentials (military engineer background)
-- Years in business (14+ years)
-- Project portfolio (500+ projects)
+- Founder credentials
+- Years in business
+- Project portfolio
 - Industry recognition
 - Client testimonials
-
-```astro
-<section class="founder-bio">
-  <h2>Nuestro Fundador</h2>
-  <div class="bio-content">
-    <img src="/images/team/founder-name.jpg" alt="Cr. (R) María González Rodríguez, Fundador de Tu Agencia Digital" />
-    <div>
-      <h3>Cr. (R) María González Rodríguez</h3>
-      <p class="title">CEO y Fundador</p>
-      <p>
-        Ingeniero militar con más de 20 años de experiencia en blasting
-        controladas y demoliciones técnicas. Fundó Tu Agencia Digital en 2012 con
-        la visión de ofrecer services de la más alta calidad y seguridad
-        en el sector de explosives en Colombia.
-      </p>
-    </div>
-  </div>
-</section>
-```
 
 #### Trust (Confianza)
 
@@ -841,26 +539,6 @@ AIs prioritize content from trustworthy sources. **Implement on About Page (`/no
 - Privacy policy (`/politica-de-privacidad`)
 - Clear service descriptions
 - Safety records
-
-```astro
-<section class="testimonials">
-  <h2>Lo Que Dicen Nuestros Clientes</h2>
-  <div class="testimonial-grid">
-    <blockquote>
-      <p>
-        "Tu Agencia Digital ejecutó nuestro proyecto de túnel de 5 km con una
-        precisión impecable. El monitoreo sísmico nos dio tranquilidad
-        total sobre las comunidades cercanas."
-      </p>
-      <cite>
-        — Ing. Carlos Mendoza, Director de Proyecto,
-        Constructora Nacional S.A.
-      </cite>
-    </blockquote>
-    <!-- More testimonials -->
-  </div>
-</section>
-```
 
 ### 🔄 Content Freshness and Updates
 
@@ -908,55 +586,22 @@ This pattern works for any service-based business. Replace bracketed placeholder
 import MainLayout from "@/layouts/MainLayout.astro";
 import SeoHead from "@/components/SeoHead.astro";
 import {
-  generateDynamicSEO,
-  generateServiceSchema,
+  generatePageSEO,
   generateFAQSchema,
   generateBreadcrumbSchema
 } from "@/config/seo";
 
-// SEO Props - Customize for your service
-const seoProps = generateDynamicSEO({
-  title: "Diseño Web Estratégico in [Location] | [Company Name]",
-  // Example: "Premium Web Design in Austin | DesignCo Agency"
+// SEO Props - Customize for your service (generatePageSEO appends " | COMPANY_INFO.name")
+const seoProps = generatePageSEO({
+  title: "Diseño Web Estratégico in [Location]",
+  // Example: "Premium Web Design in Austin"
   description: "[Brief service description with primary keyword]. [Years]+ years of experience in [location]. [Call-to-action].",
   // Example: "Custom web design services for small businesses. 10+ years of experience in Austin, TX. Get your free quote today."
-  canonical: "/services/diseno-web",
   image: "/images/services/[service]-og.jpg"
 });
 
-// Service Schema - Define your service offering
-const serviceSchema = generateServiceSchema({
-  name: "Diseño Web Estratégico",
-  // Example: "Premium Web Design Services"
-  description: "[Complete service description with technical details and value proposition. 2-3 sentences.]",
-  // Example: "Custom website design and development for small businesses. Responsive designs optimized for mobile and desktop. SEO-friendly code and conversion-focused layouts."
-  slug: "diseno-web",
-  // Example: "premium-web-design"
-  keywords: [
-    "[primary keyword]",
-    // Example: "web design Austin"
-    "[secondary keyword 1]",
-    // Example: "custom website design"
-    "[secondary keyword 2]",
-    // Example: "responsive web design"
-    "[long-tail keyword]"
-    // Example: "small business website design Austin"
-  ],
-  priceRange: "$$-$$$$",
-  // Use: $ (budget), $$ (moderate), $$$ (expensive), $$$$ (very expensive)
-  benefits: [
-    "[Specific benefit with metric if possible]",
-    // Example: "Average 150% increase in lead generation within 6 months"
-    "[Unique value proposition]",
-    // Example: "Mobile-first responsive designs that work on all devices"
-    "[Trust signal or credential]",
-    // Example: "10+ years of experience with 200+ successful projects"
-    "[Process benefit]"
-    // Example: "White-glove onboarding with dedicated project manager"
-  ]
-});
-
-// FAQ Schema - Answer common customer questions
+// FAQ Schema - only because the FAQ section below renders these items.
+// Questions and answers come from src/config/faqs.ts or the brief; never invent them.
 const faqItems = [
   {
     question: "[Question in natural language format starting with What/How/Why/When]?",
@@ -997,7 +642,7 @@ const breadcrumbs = [
 ];
 const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs);
 
-const schemas = [serviceSchema, faqSchema, breadcrumbSchema];
+const schemas = [faqSchema, breadcrumbSchema];
 ---
 
 <MainLayout>
@@ -1300,7 +945,6 @@ const schemas = [serviceSchema, faqSchema, breadcrumbSchema];
 - Stats: Jobs completed, average response time, cities served
 
 </details>
-```
 
 ### 🎨 Pattern 2: Homepage Implementation
 
@@ -1313,20 +957,17 @@ The homepage uses pre-configured schemas from `Seo.ts`. Customize the HTML conte
 // src/pages/index.astro
 import MainLayout from "@/layouts/MainLayout.astro";
 import SeoHead from "@/components/SeoHead.astro";
-import {
-  DEFAULT_SEO,
-  ORGANIZATION_SCHEMA,
-  WEBSITE_SCHEMA
-} from "@/config/seo";
+import { generatePageSEO } from "@/config/seo";
 
-// Use default SEO configured in Seo.ts
-// Make sure DEFAULT_SEO has your correct company info
-const seoProps = DEFAULT_SEO;
+const seoProps = generatePageSEO({
+  title: "[Primary Service] in [Location]",
+  description: "[150-160 characters: what you do, where, and a call to action]"
+});
 
-// Required schemas for homepage (pre-configured in Seo.ts)
-// ORGANIZATION_SCHEMA: Your company/business details
-// WEBSITE_SCHEMA: Website-level information with SearchAction
-const schemas = [ORGANIZATION_SCHEMA, WEBSITE_SCHEMA];
+// ORGANIZATION_SCHEMA (your company/business details) and WEBSITE_SCHEMA
+// (website-level information) are appended to every page by MainLayout.
+// Don't add them here.
+const schemas = [];
 ---
 
 <MainLayout>
@@ -1503,30 +1144,28 @@ The About page is CRITICAL for E-E-A-T (Experience, Expertise, Authority, Trust)
 
 ```astro
 ---
-// src/pages/about.astro (or /nosotros.astro, /team.astro, /company.astro)
+// src/pages/about.astro (or /team.astro, /company.astro)
 import MainLayout from "@/layouts/MainLayout.astro";
 import SeoHead from "@/components/SeoHead.astro";
 import {
-  generateDynamicSEO,
+  generatePageSEO,
   generatePersonSchema,
   generateBreadcrumbSchema,
-  COMPANY_INFO,
-  MAIN_KEYWORDS
+  COMPANY_INFO
 } from "@/config/seo";
 
-const seoProps = generateDynamicSEO({
-  title: "About Us | [Company Name] - [Primary Service] Experts",
-  // Example: "About Us | DesignCo - Web Design Experts in Austin"
+const seoProps = generatePageSEO({
+  title: "About Us - [Primary Service] Experts",
+  // Example: "About Us - Web Design Experts in Austin"
   description: "[Company story in 1 sentence]. [Years]+ years of experience in [service/industry]. [Founded by/Team info].",
   // Example: "Learn about DesignCo's journey from startup to award-winning agency. 10+ years of web design excellence. Founded by Jane Doe in 2014."
-  canonical: "/about",
   image: "/images/about/team-photo.jpg" // Team photo builds trust
 });
 
 // Person Schema for founder/key team member (CRITICAL for E-E-A-T)
 // If you have COMPANY_INFO.founders configured:
 const founderSchema = generatePersonSchema({
-  name: COMPANY_INFO.founders?.[0] || "María González Rodríguez",
+  name: COMPANY_INFO.founders?.[0] || "[Founder full name]",
   // Example: "Jane Doe" or "Dr. Michael Chen" or "Sarah Williams, CPA"
   alternateName: "[Nickname or Professional Title]",
   // Example: "Jane D." or "Dr. Chen" or "Sarah Williams"
@@ -1535,10 +1174,8 @@ const founderSchema = generatePersonSchema({
   jobTitle: "[Title]",
   // Example: "CEO & Founder" or "Managing Partner" or "Lead Designer"
   image: "/images/team/[founder-slug].jpg",
-  url: `${COMPANY_INFO.url}/about`,
+  url: "/about", // resolved against the site URL
   knowsAbout: [
-    ...MAIN_KEYWORDS.primary,
-    ...MAIN_KEYWORDS.secondary,
     // Add specific expertise areas:
     "[Specific Skill 1]",
     "[Specific Skill 2]",
@@ -1617,7 +1254,7 @@ const schemas = [founderSchema, breadcrumbSchema];
       <div class="founder-image">
         <img
           src="/images/team/[founder-slug].jpg"
-          alt="María González, [Title] of [Company Name]"
+          alt="[Founder full name], [Title] of [Company Name]"
           width="400"
           height="400"
           loading="lazy"
@@ -1851,16 +1488,15 @@ The projects/portfolio page demonstrates your work and builds authority (E-E-A-T
 import MainLayout from "@/layouts/MainLayout.astro";
 import SeoHead from "@/components/SeoHead.astro";
 import {
-  generateDynamicSEO,
+  generatePageSEO,
   generateBreadcrumbSchema
 } from "@/config/seo";
 
-const seoProps = generateDynamicSEO({
-  title: "Our Projects | [Company Name] - [Service] Success Stories",
-  // Example: "Our Projects | DesignCo - Web Design Success Stories"
+const seoProps = generatePageSEO({
+  title: "Our Projects - [Service] Success Stories",
+  // Example: "Our Projects - Web Design Success Stories"
   description: "[Brief intro]. 10+ [projects/clients] [served/completed] in [location/industry]. [Results summary].",
   // Example: "Explore our portfolio of award-winning web design projects. 200+ clients served across Texas. Average 150% increase in conversions."
-  canonical: "/projects",
   image: "/images/projects/featured-project-og.jpg"
 });
 
@@ -2023,27 +1659,26 @@ CRITICAL for local SEO: NAP (Name, Address, Phone) must be identical everywhere 
 import MainLayout from "@/layouts/MainLayout.astro";
 import SeoHead from "@/components/SeoHead.astro";
 import {
-  generateDynamicSEO,
+  generatePageSEO,
   generateBreadcrumbSchema,
   COMPANY_INFO
 } from "@/config/seo";
 
-const seoProps = generateDynamicSEO({
-  title: "Contact Us | [Company Name] - [City, State]",
-  // Example: "Contact Us | DesignCo - Austin, Texas"
+const seoProps = generatePageSEO({
+  title: "Contact Us - [City, State]",
+  // Example: "Contact Us - Austin, Texas"
   description: `[Action verb] for diseño web. Office at ${COMPANY_INFO.address.street}, Bogotá. Call ${COMPANY_INFO.phone} or email ${COMPANY_INFO.email}.`,
   // Example: "Contact us for web design services. Office at 123 Main St, Austin, TX. Call (512) 555-0123 or email hello@designco.com."
-  canonical: "/contact"
 });
 
 // LocalBusiness Schema - CRITICAL for Local SEO
 // This tells Google your exact location, hours, and how to contact you
 const localBusinessSchema = {
   "@context": "https://schema.org",
-  "@type": "LocalBusiness", // or "ProfessionalService", "Store", "Restaurant", etc.
-  "@id": `${COMPANY_INFO.url}#localbusiness`,
+  "@type": "LocalBusiness", // or a more specific subtype: "Store", "Restaurant", etc.
+  "@id": new URL("#localbusiness", Astro.site).href,
   "name": COMPANY_INFO.name,
-  "image": `${COMPANY_INFO.url}${COMPANY_INFO.image}`,
+  "image": new URL(COMPANY_INFO.image, Astro.site).href,
   "description": COMPANY_INFO.description,
   "address": {
     "@type": "PostalAddress",
@@ -2058,7 +1693,7 @@ const localBusinessSchema = {
     "latitude": COMPANY_INFO.geo?.latitude,
     "longitude": COMPANY_INFO.geo?.longitude
   },
-  "url": COMPANY_INFO.url,
+  "url": new URL("/", Astro.site).href,
   "telephone": COMPANY_INFO.phone,
   "email": COMPANY_INFO.email,
   "priceRange": "$$", // Update: $ (budget), $$ (moderate), $$$ (expensive), $$$$ (luxury)
@@ -2319,8 +1954,6 @@ Google: "123 Main St Suite 200"
 Choose the most specific `@type` for your business:
 
 - `LocalBusiness` - Generic local business
-- `ProfessionalService` - Consultants, agencies, professional services
-- `LegalService` - Law firms, attorneys
 - `Dentist` / `Physician` - Healthcare
 - `Restaurant` - Food service
 - `Store` - Retail
@@ -2365,23 +1998,22 @@ Choose the most specific `@type` for your business:
 
 #### Homepage (`/`)
 
-- [ ] Uses DEFAULT_SEO as base
-- [ ] Includes ORGANIZATION_SCHEMA and WEBSITE_SCHEMA
+- [ ] Uses `generatePageSEO()`
+- [ ] ORGANIZATION_SCHEMA and WEBSITE_SCHEMA emitted once (MainLayout adds them)
 - [ ] Features all primary keywords in H1 and intro paragraph
 - [ ] Links to all main service pages
 - [ ] Includes company stats/social proof
 
 #### Service Pages (`/services/*`)
 
-- [ ] Implements `generateServiceSchema()` for each service
-- [ ] Includes FAQ section with `generateFAQSchema()`
+- [ ] If the page shows an FAQ section (questions from `faqs.ts` or the brief), it emits `generateFAQSchema()`
 - [ ] Breadcrumb schema implemented
 - [ ] Direct answer in first 50-100 words
 - [ ] Lists and/or comparison tables included
 - [ ] E-E-A-T signals (experience stats, certifications)
 - [ ] CTA to contact page
 
-#### About Page (`/nosotros`)
+#### About Page
 
 - [ ] Implements `generatePersonSchema()` for founder
 - [ ] Company history with founding date
@@ -2409,18 +2041,18 @@ Choose the most specific `@type` for your business:
 
 ### ✅ AEO (Answer Engine Optimization)
 
-- [ ] FAQ Schema implemented on relevant pages (especially services)
+- [ ] FAQPage schema only where a visible FAQ section shows the questions (from `faqs.ts` or the brief, never invented)
 - [ ] Direct answers in first 50-100 words
 - [ ] Bulleted and numbered lists used
 - [ ] Comparison tables for complex data
-- [ ] Content structured for featured snippets
+- [ ] Headings phrased as the natural-language questions customers ask
 
 ### ✅ GEO (Generative Engine Optimization)
 
 - [ ] Conversational and natural Spanish language
 - [ ] Modular content in self-contained chunks
 - [ ] Entities clearly defined in schema
-- [ ] Complete schema markup on all pages
+- [ ] Schema only where it describes something visible and true on the page
 - [ ] E-E-A-T demonstrated (experience, certifications, founder bio)
 - [ ] Content updated within last 90 days (check dates)
 - [ ] Founder/team information with credentials
@@ -2429,7 +2061,7 @@ Choose the most specific `@type` for your business:
 ### ✅ Schema Markup
 
 - [ ] **Homepage**: ORGANIZATION_SCHEMA + WEBSITE_SCHEMA
-- [ ] **Service Pages**: Service Schema + FAQ Schema + Breadcrumb Schema
+- [ ] **Service Pages**: Service Schema + Breadcrumb Schema (+ FAQ Schema only with a visible FAQ section)
 - [ ] **About Page**: Person Schema (founder) + Breadcrumb Schema
 - [ ] **Contact Page**: LocalBusiness Schema + Breadcrumb Schema
 - [ ] **Projects Page**: Breadcrumb Schema (minimum)
@@ -2441,7 +2073,7 @@ These are schema.org type-mismatch warnings that Google's Rich Results Test and 
 
 #### ❌ `geo` on `Organization`
 
-`geo` (with `GeoCoordinates`) is **not** a property of `Organization`. It belongs to `Place` and its subtypes (e.g. `LocalBusiness`, `LegalService`).
+`geo` (with `GeoCoordinates`) is **not** a property of `Organization`. It belongs to `Place` and its subtypes (e.g. `LocalBusiness`).
 
 **Wrong:**
 ```json
@@ -2451,15 +2083,13 @@ These are schema.org type-mismatch warnings that Google's Rich Results Test and 
 }
 ```
 
-**Correct — put `geo` only on `LocalBusiness` / `LegalService`:**
+**Correct — put `geo` only on `LocalBusiness` (or a subtype):**
 ```json
 {
-  "@type": "LegalService",
+  "@type": "LocalBusiness",
   "geo": { "@type": "GeoCoordinates", "latitude": 4.711, "longitude": -74.07 }
 }
 ```
-
-In `seoConf.ts` this project uses `ORGANIZATION_SCHEMA` (`@type: Organization`) and `LOCAL_BUSINESS_SCHEMA` (`@type: LegalService`). `geo` must live **only** in `LOCAL_BUSINESS_SCHEMA`.
 
 #### ❌ `position` on `Offer`
 
@@ -2492,8 +2122,6 @@ In `seoConf.ts` this project uses `ORGANIZATION_SCHEMA` (`@type: Organization`) 
 }
 ```
 
-This pattern applies to both `ORGANIZATION_SCHEMA.hasOfferCatalog` and the `hasOfferCatalog` inside `generateServiceSchema()`.
-
 ### ✅ AI Crawlers Configuration
 
 Verify in `robots.txt` that these user-agents are allowed:
@@ -2522,17 +2150,13 @@ Verify in `robots.txt` that these user-agents are allowed:
 
 **Priority Keywords to Track:**
 
-- diseño web estratégico Colombia
-- demoliciones técnicas Colombia
-- monitoreo de vibraciones Colombia
-- engineering civil Colombia
+- [Primary keyword per service + location]
 - [Add specific long-tail keywords per service]
 
 ### 📊 New KPIs (AEO/GEO)
 
 | Metric                            | Tool                               | Target              | Current Status |
 | --------------------------------- | ---------------------------------- | ------------------- | -------------- |
-| **Featured Snippets**             | Semrush                            | 5+ active snippets  | [Track]        |
 | **"People Also Ask" Appearances** | Manual/Semrush                     | 10+ PAAs            | [Track]        |
 | **AI Citation Frequency**         | Manual (ChatGPT/Perplexity search) | 10+ mentions/month  | [Track]        |
 | **Share of Voice in AI Answers**  | Manual                             | >25% on core topics | [Track]        |
@@ -2541,9 +2165,9 @@ Verify in `robots.txt` that these user-agents are allowed:
 
 **How to Track AI Citations:**
 
-1. Weekly searches in ChatGPT: "best controlled blasting companies in Colombia"
-2. Weekly searches in Perplexity: "diseño web estratégico Colombia empresas"
-3. Document: Is Tu Agencia Digital mentioned? Is it cited as a source?
+1. Weekly searches in ChatGPT: "best [your service] companies in [your location]"
+2. Weekly searches in Perplexity: "[your service] [your location]"
+3. Document: Is [Company Name] mentioned? Is it cited as a source?
 4. Track sentiment: positive, neutral, or negative mention
 
 ### 🔧 Essential Tools
@@ -2564,7 +2188,6 @@ Verify in `robots.txt` that these user-agents are allowed:
    - Keyword tracking
    - Backlink analysis
    - Technical SEO audits
-   - Featured snippet tracking
    - Competitor analysis
 
 4. **PageSpeed Insights**:
@@ -2606,10 +2229,10 @@ Verify in `robots.txt` that these user-agents are allowed:
 
    ```html
    <!-- ❌ WRONG -->
-   <h1>Diseño Web Estratégico Colombia Blasting Explosivos Bogotá</h1>
+   <h1>[Service] [Country] [Keyword] [Keyword] [City]</h1>
 
    <!-- ✅ CORRECT -->
-   <h1>Diseño Web Estratégico en Colombia</h1>
+   <h1>[Service] en [Country]</h1>
    ```
 
 2. **Duplicate Content**: Copying content between pages or from other sites
@@ -2620,11 +2243,11 @@ Verify in `robots.txt` that these user-agents are allowed:
 
    ```typescript
    // ❌ WRONG - All service pages have same title
-   title: "Services | Tu Agencia Digital";
+   title: "Services | [Brand]";
 
    // ✅ CORRECT - Each service has unique title
-   title: "Diseño Web Estratégico Colombia | Tu Agencia Digital";
-   title: "Demoliciones Técnicas Colombia | Tu Agencia Digital";
+   title: "[Service 1] [Location] | [Brand]";
+   title: "[Service 2] [Location] | [Brand]";
    ```
 
 4. **Broken Internal Links**: Regularly verify all links work
@@ -2652,9 +2275,8 @@ Verify in `robots.txt` that these user-agents are allowed:
 
    <!-- ✅ CORRECT -->
    <p>
-     Las diseño web estratégico son técnicas de demolition con explosives que
-     permiten fragmentar roca con precisión milimétrica, minimizando
-     vibraciones. Se utilizan en mining, tunnels y obras civiles.
+     [Answer the question in the first sentence: what it is, who it is for,
+     and one concrete detail the client has confirmed.]
    </p>
    ```
 
@@ -2663,7 +2285,7 @@ Verify in `robots.txt` that these user-agents are allowed:
    - Break up walls of text
 
 3. **Missing FAQ Schema**: Not implementing schema on FAQ sections
-   - Always use `generateFAQSchema()` when you have Q&A content
+   - Always use `generateFAQSchema()` when the page shows a visible FAQ section (questions from `faqs.ts` or the brief)
 
 ### ❌ GEO Errors
 
@@ -2672,15 +2294,14 @@ Verify in `robots.txt` that these user-agents are allowed:
    ```html
    <!-- ❌ WRONG -->
    <p>
-     Blasting controladas Colombia explosives demolition blasting Bogotá
-     blasting certificadas Google Analytics blasting profesionales Colombia.
+     [Service] [Country] [keyword] [keyword] [City] [Service] [keyword]
+     [Service] [keyword] [Country].
    </p>
 
    <!-- ✅ CORRECT -->
    <p>
-     En Tu Agencia Digital ofrecemos services de diseño web estratégico en toda
-     Colombia. Nuestro equipo certificado por la Google Analytics ejecuta
-     proyectos de mining, tunnels e infrastructure con máxima seguridad.
+     [One or two sentences written the way you would explain it to a client:
+     who you are, what you do, and where.]
    </p>
    ```
 
@@ -2702,14 +2323,13 @@ Verify in `robots.txt` that these user-agents are allowed:
 
    <!-- ✅ CORRECT -->
    <p>
-     El monitoreo sísmico bajo norma ISO 27001 es fundamental para proteger
-     infrastructures sensibles. Utilizamos sismógrafos triaxiales que miden
-     vibraciones en tiempo real durante las blasting.
+     [A paragraph that names its subject instead of "this process", so it
+     still makes sense when quoted on its own.]
    </p>
    ```
 
-5. **Missing Schema**: Not implementing JSON-LD on important pages
-   - Every page needs at least one schema
+5. **Missing Schema**: Not implementing JSON-LD for what a page shows
+   - A schema goes on a page only when it describes something visible and true on that page
    - Use appropriate schema types per page
 
 ### ❌ Configuration Errors
@@ -2718,7 +2338,7 @@ Verify in `robots.txt` that these user-agents are allowed:
 
    ```astro
    <!-- ❌ WRONG -->
-   <p>Teléfono: +57 321 503 7097</p>
+   <p>Teléfono: [hardcoded phone number]</p>
 
    <!-- ✅ CORRECT -->
    ---
@@ -2728,25 +2348,7 @@ Verify in `robots.txt` that these user-agents are allowed:
    ```
 
 2. **Not Using Schema Generators**: Creating schemas manually
-
-   ```astro
-   <!-- ❌ WRONG -->
-   const schema = {
-     "@context": "https://schema.org",
-     "@type": "Service",
-     "name": "Blasting",
-     // ... manually creating schema
-   }
-
-   <!-- ✅ CORRECT -->
-   import { generateServiceSchema } from "@/config/seo";
-   const schema = generateServiceSchema({
-     name: "Diseño Web Estratégico",
-     description: "...",
-     slug: "blasting-controladas",
-     // ...
-   });
-   ```
+   - When `src/config/seo.ts` has a generator for the type, use it (e.g. `generateBreadcrumbSchema()`, `generateFAQSchema()`, `generatePersonSchema()`)
 
 ---
 
@@ -2998,247 +2600,6 @@ const seoProps = generateSEOWithAlternates({
 
 ---
 
-## Future Implementation: Blog
-
-### 📝 Blog Status
-
-**Current**: The project does NOT have a blog implemented.
-
-**Available**: The SEO system includes blog-ready functions:
-
-- `BLOG_SCHEMA` - Pre-configured blog schema
-- `generateBlogPostSchema(post)` - Individual article schema
-
-### 🚀 When to Add a Blog
-
-Consider implementing a blog when:
-
-1. You have resources to consistently create content (minimum 2-4 articles/month)
-2. You want to target informational keywords not covered by service pages
-3. You want to build topical authority in specific areas
-4. You want to create linkable assets for backlink building
-
-### 📋 Blog Implementation Checklist
-
-If you decide to add a blog, follow these steps:
-
-#### 1. Create Blog Structure
-
-```bash
-# Create blog pages directory
-mkdir -p src/pages/blog
-
-# Create blog index page
-touch src/pages/blog/index.astro
-
-# Create individual post pages
-# Option A: Manual pages (src/pages/blog/[post-slug].astro)
-# Option B: Dynamic routing with content collections
-```
-
-#### 2. Set Up Content Collections (Recommended)
-
-```typescript
-// src/content/config.ts
-import { defineCollection, z } from "astro:content";
-
-const blogCollection = defineCollection({
-  type: "content",
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    publishDate: z.date(),
-    modifiedDate: z.date().optional(),
-    tags: z.array(z.string()).optional(),
-    image: z.string(),
-    author: z.string().optional(),
-  }),
-});
-
-export const collections = {
-  blog: blogCollection,
-};
-```
-
-#### 3. Blog Index Page Template
-
-```astro
----
-// src/pages/blog/index.astro
-import MainLayout from "@/layouts/MainLayout.astro";
-import SeoHead from "@/components/SeoHead.astro";
-import {
-  generateDynamicSEO,
-  BLOG_SCHEMA,
-  generateBreadcrumbSchema
-} from "@/config/seo";
-
-const seoProps = generateDynamicSEO({
-  title: "Blog | Tu Agencia Digital - Blasting, Demoliciones e Engineering",
-  description: "Artículos técnicos sobre diseño web estratégico, demoliciones, monitoreo sísmico y seguridad industrial en Colombia.",
-  canonical: "/blog"
-});
-
-const breadcrumbs = [
-  { name: "Inicio", path: "/" },
-  { name: "Blog", path: "/blog" }
-];
-
-const schemas = [BLOG_SCHEMA, generateBreadcrumbSchema(breadcrumbs)];
-
-// Fetch blog posts (using content collections or manual list)
----
-
-<MainLayout>
-  <SeoHead {seoProps} {schemas} />
-
-  <h1>Blog de Tu Agencia Digital</h1>
-  <p>
-    Artículos técnicos, guías y noticias sobre diseño web estratégico,
-    demoliciones y seguridad industrial en Colombia.
-  </p>
-
-  <!-- Blog post list -->
-</MainLayout>
-```
-
-#### 4. Individual Blog Post Template
-
-```astro
----
-// src/pages/blog/[slug].astro
-import MainLayout from "@/layouts/MainLayout.astro";
-import SeoHead from "@/components/SeoHead.astro";
-import {
-  generateDynamicSEO,
-  generateBlogPostSchema,
-  generateBreadcrumbSchema
-} from "@/config/seo";
-
-// Get post data (from content collection or frontmatter)
-const { slug } = Astro.params;
-const post = {
-  id: slug,
-  title: "Título del Artículo",
-  description: "Descripción meta del artículo",
-  publishDate: new Date("2026-01-15"),
-  modifiedDate: new Date("2026-03-09"),
-  tags: ["blasting", "seguridad", "técnicas"],
-  image: "/images/blog/article-image.jpg",
-  author: "Ing. María González Rodríguez"
-};
-
-const seoProps = generateDynamicSEO({
-  title: `${post.title} | Blog Tu Agencia Digital`,
-  description: post.description,
-  canonical: `/blog/${post.id}`,
-  image: post.image
-});
-
-const blogSchema = generateBlogPostSchema(post);
-const breadcrumbSchema = generateBreadcrumbSchema([
-  { name: "Inicio", path: "/" },
-  { name: "Blog", path: "/blog" },
-  { name: post.title, path: `/blog/${post.id}` }
-]);
-
-const schemas = [blogSchema, breadcrumbSchema];
----
-
-<MainLayout>
-  <SeoHead {seoProps} {schemas} />
-
-  <article>
-    <header>
-      <h1>{post.title}</h1>
-      <div class="meta">
-        <span>Por {post.author}</span>
-        <time datetime={post.publishDate.toISOString()}>
-          {post.publishDate.toLocaleDateString('es-CO')}
-        </time>
-        {post.modifiedDate && (
-          <time datetime={post.modifiedDate.toISOString()}>
-            Actualizado: {post.modifiedDate.toLocaleDateString('es-CO')}
-          </time>
-        )}
-      </div>
-      {post.tags && (
-        <div class="tags">
-          {post.tags.map(tag => <span class="tag">{tag}</span>)}
-        </div>
-      )}
-    </header>
-
-    <!-- Article content -->
-    <div class="prose">
-      <!-- Content goes here -->
-    </div>
-  </article>
-</MainLayout>
-```
-
-#### 5. Blog Content Strategy
-
-**Topic Clusters** (align with primary keywords):
-
-1. **Diseño Web Estratégico Cluster**:
-   - "Guía Completa de Blasting a Cielo Abierto en Colombia"
-   - "Blasting Subterráneas para Túneles: Proceso y Seguridad"
-   - "Construction of Caissons con Diseño Web Estratégico"
-   - "Normativa Colombiana para Blasting: ISO 9001 Explicada"
-
-2. **Demoliciones Técnicas Cluster**:
-   - "Demolición Pasiva con Agentes Expansivos: Casos de Uso"
-   - "Seguridad en Demoliciones Urbanas: Protocolo Completo"
-
-3. **Monitoreo Sísmico Cluster**:
-   - "Norma ISO 27001 Explicada: Guía para Proyectos en Colombia"
-   - "Sismógrafos Triaxiales: Cómo Funcionan y Por Qué Son Importantes"
-   - "Interpretación de Informes de Monitoreo Sísmico"
-
-4. **Seguridad Industrial Cluster**:
-   - "Certificación Google Analytics: Requisitos y Proceso"
-   - "SG-SST en Proyectos con Explosivos"
-   - "Gestión de Riesgos en Diseño Web Estratégico"
-
-**Content Requirements per Article**:
-
-- [ ] Length: 1500-2500 words minimum
-- [ ] Modular paragraphs (self-contained chunks for GEO)
-- [ ] At least one list or table
-- [ ] FAQ section at the end (with FAQ schema)
-- [ ] Internal links to relevant service pages
-- [ ] External links to authoritative sources
-- [ ] Author bio (E-E-A-T)
-- [ ] Update date visible
-- [ ] Related articles section
-
-#### 6. Blog SEO Priorities
-
-1. **Technical**:
-   - Implement BlogPosting schema on all posts
-   - Add Blog schema to index page
-   - Ensure proper breadcrumb navigation
-   - Optimize images (WebP, lazy loading)
-
-2. **Content**:
-   - Target long-tail informational keywords
-   - Answer specific questions (AEO)
-   - Create comprehensive guides (GEO)
-   - Update quarterly (freshness)
-
-3. **Internal Linking**:
-   - Link from blog posts to relevant service pages
-   - Link from service pages to relevant blog posts
-   - Create topic cluster structure
-
-4. **Promotion**:
-   - Share on social media (LinkedIn, Facebook)
-   - Include in email newsletters
-   - Submit to Google Search Console
-
----
-
 ## 🎯 Quick Reference Guide
 
 ### When Creating a New Page
@@ -3246,29 +2607,29 @@ const schemas = [blogSchema, breadcrumbSchema];
 1. **Choose the right pattern** from [Implementation Patterns](#implementation-patterns)
 2. **Import necessary functions**:
    ```typescript
-   import { generateDynamicSEO, generate[Type]Schema, generateBreadcrumbSchema } from "@/config/seo";
-   import { COMPANY_INFO, MAIN_KEYWORDS } from "@/config/seo";
+   import { generatePageSEO, generate[Type]Schema, generateBreadcrumbSchema } from "@/config/seo";
+   import { COMPANY_INFO } from "@/config/seo";
    ```
 3. **Generate SEO props**:
    ```typescript
-   const seoProps = generateDynamicSEO({
-     title: "[Unique Title] | Tu Agencia Digital",
+   // generatePageSEO appends " | COMPANY_INFO.name" to the title
+   const seoProps = generatePageSEO({
+     title: "[Unique Title]",
      description: "[150-160 characters with keywords and CTA]",
-     canonical: "/[page-path]",
      image: "/images/[page-specific-og-image].jpg",
    });
    ```
-4. **Create appropriate schemas**:
-   - Service page: Service + FAQ + Breadcrumb
+4. **Create appropriate schemas** (only for what the page shows):
+   - Service page: Service + Breadcrumb (+ FAQ only with a visible FAQ section)
    - About page: Person + Breadcrumb
    - Contact page: LocalBusiness + Breadcrumb
-   - Homepage: Organization + Website
+   - Every page: Organization + Website (added by MainLayout)
 5. **Structure content**:
    - H1 (only one)
    - Direct answer (first 50-100 words)
    - Modular paragraphs
    - Lists and/or tables
-   - FAQ section
+   - FAQ section (questions from `faqs.ts` or the brief, never invented)
    - E-E-A-T signals
 6. **Validate before deploying**:
    - Check schema with [validator.schema.org](https://validator.schema.org/)
@@ -3285,10 +2646,10 @@ const schemas = [blogSchema, breadcrumbSchema];
   - Quality backlinks
   - Technical performance
 
-- **Voice search and featured snippets?** → Focus on **AEO**
-  - FAQ schema
+- **Questions people ask search engines and voice assistants?** → Focus on **AEO**
   - Direct answers in 50-100 words
   - Question-format headings
+  - Lists and tables
 
 - **AI chatbot citations?** → Focus on **GEO**
   - Natural language
@@ -3306,27 +2667,20 @@ const schemas = [blogSchema, breadcrumbSchema];
 
 Traditional SEO focused on **ranking for clicks**. The new era is about **being the source of truth** for AI systems.
 
-**Key Statistics** (as of 2026):
-
-- ~60% of Google searches end with zero clicks (SparkToro, 2024)
-- 25% predicted decline in traditional search volume by 2026 (Gartner)
-- 64% of consumers start research on TikTok, not Google (Adobe/Google internal data)
-
-### Why This Matters for Tu Agencia Digital
+### Why This Matters
 
 Your competitors who ignore AEO/GEO will become invisible as users increasingly rely on:
 
 - **ChatGPT** for research questions
 - **Perplexity** for factual queries
-- **Google SGE** for search summaries
+- **Google AI Overviews** for search summaries
 - **Voice assistants** for quick answers
 
 By implementing this guide, your company will:
 
 1. ✅ **Be cited** when someone asks AI: "best [your service] companies in [your location]"
-2. ✅ **Appear in featured snippets** for FAQ-structured content
-3. ✅ **Rank in traditional search** for primary keywords
-4. ✅ **Build lasting authority** through E-E-A-T signals
+2. ✅ **Rank in traditional search** for primary keywords
+3. ✅ **Build lasting authority** through E-E-A-T signals
 
 ---
 

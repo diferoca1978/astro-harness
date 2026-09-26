@@ -11,9 +11,9 @@ single, agent-agnostic source of truth (`CLAUDE.md` is just a pointer here).
 > per-client knobs (edited every time).
 >
 > **Do not assume infrastructure that is not in this repo.** This scaffold has
-> **no** headless CMS, **no** server actions, and **no** email service. The blog
-> is local markdown. Verify by reading the files — never describe features from
-> memory of another client project.
+> **no** headless CMS, **no** server actions, **no** email service, and **no**
+> blog. Verify by reading the files — never describe features from memory of
+> another client project.
 
 ## What this is
 
@@ -64,7 +64,6 @@ change X → update Y" below.
   either one.
 - **astro-seo** + **@astrojs/sitemap** — SEO meta + auto sitemap.
 - **@astrojs/netlify** — deploy adapter (Netlify).
-- Blog content is **local markdown** in `src/contentBlogs/`.
 
 ## Architecture (real — verify against the tree, don't assume)
 
@@ -87,7 +86,9 @@ change X → update Y" below.
 
 ### Config — `src/config/` (the single source of truth for content)
 
-- `seo.ts` — `COMPANY_INFO`, JSON-LD schemas, `generateDynamicSEO()` helper.
+- `seo.ts` — `COMPANY_INFO`, JSON-LD schemas, `generatePageSEO()` helper.
+  Absolute URLs come from `site` (`astro.config.mjs`) via
+  `import.meta.env.SITE` — never hardcode the domain.
 - `services.ts` — service / specialty catalog (typed `Service[]`).
 - `faqs.ts` — FAQ content (structured for AEO).
 - `authorBio.ts` — author credentials (E-E-A-T).
@@ -113,7 +114,7 @@ The whole point of the scaffold is this boundary.
 |            | **Invariant** (skeleton — do not edit per client)                                                                                                   | **Variable** (per-client knobs)                                                                                |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | **What**   | Folder structure, component contracts, SEO machinery (`SeoHead`, astro-seo, JSON-LD generators), `robots.txt.ts`, build/verify tooling, conventions | Brand tokens, page content, which pages/sections exist, company data, language                                 |
-| **Where**  | `layouts/`, `SeoHead.astro`, generator logic in `config/seo.ts`, `src/utils/scripts/`, `init.sh`, this file's conventions                           | `global.css @theme`, `config/*` data, `navigation.ts`, `MainLayout` `lang`, `src/pages/*`, `src/contentBlogs/` |
+| **Where**  | `layouts/`, `SeoHead.astro`, generator logic in `config/seo.ts`, `src/utils/scripts/`, `init.sh`, this file's conventions                           | `global.css @theme`, `config/*` data, `navigation.ts`, `MainLayout` `lang`, `src/pages/*`                      |
 | **Filled** | Once, in the scaffold                                                                                                                               | Every client, from the brief                                                                                   |
 
 ### Knobs map — one home per per-client thing (never duplicate)
@@ -122,7 +123,8 @@ The whole point of the scaffold is this boundary.
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | Colors (visual tokens)                         | `src/styles/global.css` → `@theme` (only)                                                                                                                                                      | Brand guide / logo (NOT the content brief) |
 | Fonts                                          | **3 files** (Astro Fonts API): `astro.config.mjs` `fonts[]` (`name` + `provider`) · `src/styles/global.css` `@theme` (`--font-*` family) · `src/layouts/MainLayout.astro` `<Font cssVariable>` | Brand guide                                |
-| Company data (name, phone, email, social, url) | `src/config/seo.ts` → `COMPANY_INFO`                                                                                                                                                           | Brief + `client-gaps.md`                   |
+| Site URL | `astro.config.mjs` → `site` (only — `seo.ts` reads it via `import.meta.env.SITE`; never hardcode the domain) | Provisioning script · `CHECKPOINTS.md` §1 |
+| Company data (name, phone, email, WhatsApp, social profiles) | `src/config/seo.ts` → `COMPANY_INFO`                                                                                                                                             | Brief + `client-gaps.md`                   |
 | Services / specialties                         | `src/config/services.ts`                                                                                                                                                                       | Brief                                      |
 | FAQs                                           | `src/config/faqs.ts`                                                                                                                                                                           | Brief                                      |
 | Author / credentials                           | `src/config/authorBio.ts`                                                                                                                                                                      | Brief                                      |
@@ -375,7 +377,7 @@ must land in the *same* change once implementation starts.
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Add a dependency / remove one                       | `package.json` · **Tech stack** above                                                                                                                                                                                                                       |
 | Upgrade a dependency across a major version (e.g. `astro`, `typescript`, the adapter) | `package.json` · `pnpm-lock.yaml` · the version named in **Tech stack** · run `pnpm verify` on the branch and get it passing **before merging** — the one standing exception to on-demand `verify` |
-| Add server Actions + an email service (e.g. Resend) | `astro.config.mjs` `env.schema` · `src/actions/` · `prerender = false` on the page · **Tech stack** · **Architecture** · remove the "no server actions / no email" warning at the top · add the API key + recipient to the **Knobs map** + `client-gaps.md` |
+| Add server Actions + an email service (e.g. Resend) | `astro.config.mjs` `env.schema` · `src/actions/` · `prerender = false` on the page · **Tech stack** · **Architecture** · remove the "no server actions / no email" warning at the top · add the API key + recipient to the **Knobs map** + `client-gaps.md` · follow § Contact forms (manual, per client) |
 | Choose vanilla instead of GSAP for a client (or vice versa) | `pnpm remove gsap` (or add it) · delete/restore `.claude/skills/gsap-*` · **Knobs map** row · `client-gaps.md` (record the decision) · `CHECKPOINTS.md` motion checklist — see "Animation strategy" below for the full checklist              |
 | Add/rename a config file in `src/config/`           | **Config** section · **Knobs map**                                                                                                                                                                                                                          |
 | Add a new font slot                                 | the 3 font files (see Knobs map)                                                                                                                                                                                                                            |
@@ -401,6 +403,27 @@ must land in the *same* change once implementation starts.
 
 After any such change, confirm this file still matches reality before
 committing. `pnpm verify` remains on-demand — only run it if the user asks.
+
+### Contact forms (manual, per client)
+
+The scaffold has **no** contact module. When a client needs a contact form, it
+is built by hand in the client repo, and it must follow these rules:
+
+1. Recipient and sender addresses come only from environment variables, with
+   no default in code. If one is missing, sending fails with a visible error.
+2. Each client gets its own Resend API key. Keys are never shared between
+   clients.
+3. The form has a honeypot field. The server silently discards any submission
+   that fills it.
+4. The server validates every field for maximum length and format, the phone
+   included.
+5. Escape all visitor input before inserting it into the email HTML.
+6. Never send email to the address the visitor typed. Use it only as
+   `replyTo`.
+7. If sending fails, the visitor sees an error, never a success message.
+8. Add Cloudflare Turnstile only once real spam appears. A honeypot does not
+   stop direct calls to the endpoint. Turnstile costs a secret environment
+   variable, server-side verification and a mention in the privacy policy.
 
 ### Spec-first: all work goes through one of two lanes
 

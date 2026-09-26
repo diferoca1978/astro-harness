@@ -9,10 +9,6 @@ item is conditional on the one above it — do not skip ahead.
       `https://elsitiodelabogado.com`), not the scaffold placeholder
       (`https://example.com`) or a Netlify preview URL
       (`https://<name>.netlify.app`).
-- [ ] `src/config/seo.ts` → `COMPANY_INFO.url` matches the same real domain
-      (no `https://tuagencia.com` placeholder, no `.netlify.app`).
-- [ ] The two values above are **identical** — no drift between
-      `astro.config.mjs` and `COMPANY_INFO.url`.
 
 ## 2. Domain configured on Netlify (only if step 1 is done)
 
