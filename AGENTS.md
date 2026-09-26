@@ -28,7 +28,8 @@ pnpm dev        # dev server at localhost:4321
 pnpm build      # production build to ./dist/
 pnpm preview    # preview the build
 pnpm check      # astro check (type/diagnostics on .astro)
-pnpm verify     # ./init.sh — build + astro check + customization lint (the gate)
+pnpm verify     # ./init.sh — astro check + build + SEO check + customization lint (the gate)
+node harness/check-seo.mjs --url https://<domain> --report   # SEO check of a live site, report only
 pnpm prettier --write .   # formatting (no eslint configured)
 ```
 
@@ -187,7 +188,7 @@ Implementation of both lanes is orchestrated by `/spec-impl`, which delegates
 each code-writing step to the `coder` subagent one step per call and keeps the
 branch, diff review, pauses, and ambiguity handling in the main session.
 
-`pnpm verify` (build + astro check + customization lint) is **not** run as a
+`pnpm verify` (see **Commands**) is **not** run as a
 default step in this loop — only run it when the user explicitly asks for it.
 
 If a feature needs data that is still in `client-gaps.md`, **ask for it before
@@ -464,11 +465,11 @@ was **not** cloned from here (a legacy client codebase), run
 `install-harness.sh <path-to-project>` — kept outside this repo, alongside
 the client-provisioning script, so it never gets copied into new client
 clones — to copy the reusable pieces (subagents, the spec-gate,
-`CLAUDE.md`) into it, then invoke the `adapt-harness` skill from inside
-that project — it explores the project's real code, writes its own
-`AGENTS.md` from what it finds (not this file's paths), and proposes
-migration specs through the same mechanism as `/spec`. One-time
-onboarding step, not an ongoing tool — see
+`CLAUDE.md`, `harness/check-seo.mjs`) into it, then invoke the
+`adapt-harness` skill from inside that project — it explores the
+project's real code, writes its own `AGENTS.md` from what it finds (not
+this file's paths), and proposes migration specs through the same
+mechanism as `/spec`. One-time onboarding step, not an ongoing tool — see
 `.claude/skills/adapt-harness/SKILL.md` for the full workflow.
 
 ---
