@@ -1,31 +1,15 @@
-// =============================================================================
-// AUTHORS CONFIGURATION
-// src/config/authorBio.ts
-// =============================================================================
+// People: authors and founders, for E-E-A-T. One model, filled per client from the brief.
+// seo.ts builds each Person JSON-LD node from it (generatePersonSchema).
 
 export interface Author {
-  /** Author's full name */
+  slug: string; // ASCII kebab-case, unique, stable: the Person @id is <site>/#person-<slug>
   name: string;
-  /** Role in the company */
   role: string;
-  /** Short bio (1-2 sentences) to display in posts */
   bio: string;
-  /** Author's image URL (optional) */
-  image?: string;
-  /** Credentials or specialties */
-  credentials: string[];
-  /** Author's social media links */
-  socialMedia?: {
-    linkedin?: string;
-    instagram?: string;
-    twitter?: string;
-  };
-  /** Author's profile URL on the site (optional) */
-  url?: string;
+  image?: string; // a path on this site or an https:// URL
+  credentials: string[]; // shown on the page for E-E-A-T, not emitted in the JSON-LD
+  socialMedia?: Record<string, string>; // profile URLs only → sameAs
+  url?: string; // the author's page on this site, as a path
 }
 
-/**
- * Authors array
- * Filled per client from the brief
- */
 export const AUTHORS: Author[] = [];

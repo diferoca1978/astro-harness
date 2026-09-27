@@ -1,9 +1,6 @@
 ---
-import {
-  ORGANIZATION_SCHEMA,
-  WEBSITE_SCHEMA,
-  type JSONLDSchema,
-} from "@/config/seo";
+import { generateHomeSchemas, type JSONLDSchema } from "@/config/seo";
+import { LOCALE } from "@/config/companyInfo";
 import type { SEOProps } from "astro-seo";
 import { Font } from "astro:assets";
 import "@/styles/global.css";
@@ -19,29 +16,36 @@ interface Props {
 
 const { seoProps, schemas = [] } = Astro.props;
 
-const allSchemas = [...schemas, ORGANIZATION_SCHEMA, WEBSITE_SCHEMA];
+// A noindex page gets no JSON-LD at all. Otherwise: the page's own schemas, plus the
+// home schemas (the business, the WebSite and the founders) on '/' only.
+const allSchemas = seoProps.noindex
+  ? []
+  : [...schemas, ...(Astro.url.pathname === "/" ? generateHomeSchemas() : [])];
 ---
 
 <!doctype html>
-<html lang="es-CO" class="scrollbar-hide overflow-x-hidden">
-  <!-- SEO Head -->
-  <SeoHead seoProps={seoProps} schemas={allSchemas} />
+<html lang={LOCALE} class="scrollbar-hide overflow-x-hidden">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="icon" href="/favicon.ico" />
+    <!-- SEO Head -->
+    <SeoHead seoProps={seoProps} schemas={allSchemas} />
 
-  <!-- Fonts -->
-  <Font cssVariable="--font-jakarta" />
-  <Font cssVariable="--font-nunito" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
 
-  <!-- SiteMap -->
-  <link rel="sitemap" href="/sitemap-index.xml" />
+    <!-- Fonts -->
+    <Font cssVariable="--font-jakarta" />
+    <Font cssVariable="--font-nunito" />
 
-  <script>
-    import "@/utils/scripts/lennis.js";
-  </script>
+    <!-- SiteMap -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <script>
+      import "@/utils/scripts/lennis.js";
+    </script>
+  </head>
 
   <body>
     <Navbar />

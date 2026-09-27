@@ -6,13 +6,14 @@
  * Usage:
  * <SEOHead
  *   seoProps={seoData}
- *   schemas={[ORGANIZATION_SCHEMA, breadcrumbSchema, faqSchema]}
+ *   schemas={[breadcrumbSchema]}
  * />
  */
 
 import { SEO } from "astro-seo";
 import type { SEOProps } from "astro-seo";
 import type { JSONLDSchema } from "@/config/seo";
+import JsonLd from "@/components/JsonLd.astro";
 
 interface Props {
   seoProps: SEOProps;
@@ -26,8 +27,4 @@ const { seoProps, schemas = [] } = Astro.props;
 <SEO {...seoProps} />
 
 <!-- JSON-LD Structured Data -->
-{
-  schemas.map((schema) => (
-    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
-  ))
-}
+{schemas.map((schema) => <JsonLd schema={schema} />)}
