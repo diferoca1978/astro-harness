@@ -26,7 +26,7 @@
 //      more than one origin and no --site (--dist); with --url, also sitemaps
 //      that list no page <loc>, or none on the --url site
 //
-// Rules (15), with their severity:
+// Rules (17), with their severity:
 //   jsonld-parse        error    Every JSON-LD block parses, declares a
 //                                schema.org @context, and each top-level node
 //                                (or @graph member) has a @type.
@@ -58,6 +58,19 @@
 //                                on both sides and ignoring case.
 //   breadcrumb-shape    error    A BreadcrumbList has at least 2 items, and the
 //                                home page (/) has none.
+//   local-address       error    Every node whose @type includes one of
+//                                LOCAL_BUSINESS_TYPES has an address object
+//                                with a non-empty string streetAddress,
+//                                addressLocality and addressCountry.
+//   url-lowercase       error    No uppercase letter in the pathname of each
+//                                page's own URL, of every same-site page URL
+//                                (the ones url-resolves looks at) and of every
+//                                page <loc> in the sitemaps. The pathname is
+//                                percent-decoded first (%C3%A9, é, does not
+//                                count; %C3%89, É, does); the query and the
+//                                #fragment are ignored. With malformed
+//                                percent-encoding, only the letters outside
+//                                its %XX escapes count.
 //   asset-missing       warning  A same-site asset URL exists (--dist: a file;
 //                                --url: a 2xx).
 //   placeholder-text    warning  The HTML has none of [CLIENTE], example.com,
@@ -87,7 +100,7 @@
 // error is a failed request. The 404 is not checked (it is not in the
 // sitemap), and external URLs are never requested.
 //
-// URLs that url-resolves, url-canonical-form, asset-missing and
+// URLs that url-resolves, url-canonical-form, url-lowercase, asset-missing and
 // external-url-http look at: <a href>, <img src>, the canonical, any <link>
 // whose rel contains "icon", og:url, og:image, twitter:image; in JSON-LD,
 // every http(s):// string (not under @context or @id, not a schema.org URL)
@@ -882,6 +895,50 @@ async function nonCanonicalPageUrls(occurrences, site) {
   return findings;
 }
 
+/**
+ * The pathname of `url` if it has an uppercase letter (Unicode Lu), else null.
+ * It is percent-decoded first, the same test as siteUrl() in src/utils/url.ts.
+ * With malformed percent-encoding, every %XX escape is dropped instead, so only
+ * literal letters count, and the pathname is returned as written.
+ */
+function uppercasePath(url) {
+  const pathname = new URL(url).pathname;
+  let decoded = null;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    // malformed percent-encoding: tested without its escapes, below
+  }
+  const tested = decoded ?? pathname.replace(/%[0-9A-Fa-f]{2}/g, "");
+  return /\p{Lu}/u.test(tested) ? (decoded ?? pathname) : null;
+}
+
+/** url-lowercase over a list of occurrences (a page's, or a sitemap's). */
+function uppercasePageUrls(occurrences, site) {
+  const pages = occurrences.filter(
+    (o) => isSameSite(o.url, site.origin) && pathKind(o.url) === "page",
+  );
+  const findings = [];
+  for (const u of distinctUrls(pages)) {
+    const shown = uppercasePath(u.url);
+    if (shown !== null) {
+      findings.push(
+        `${describe(u)} has an uppercase letter in its path: ${shown}`,
+      );
+    }
+  }
+  return findings;
+}
+
+/** A page's own URL as an occurrence, so url-lowercase merges it with the same URL on the page. */
+const ownUrlOccurrence = (page) => ({
+  raw: page.url,
+  url: page.url,
+  where: "own URL",
+  jsonld: false,
+  relative: false,
+});
+
 // ---------------------------------------------------------------------------
 // Rules
 // ---------------------------------------------------------------------------
@@ -933,6 +990,15 @@ function exactlyOne(count, what) {
 }
 
 const DEPRECATED_TYPES = ["ProfessionalService", "SearchAction", "HowTo"];
+
+/** The @types local-address checks; a subtype added to LocalBusinessType in src/config/companyInfo.ts goes here too. */
+const LOCAL_BUSINESS_TYPES = [
+  "LocalBusiness",
+  "LegalService",
+  "Attorney",
+  "ProfessionalService",
+];
+const ADDRESS_FIELDS = ["streetAddress", "addressLocality", "addressCountry"];
 
 const RULES = [
   {
@@ -1140,6 +1206,52 @@ const RULES = [
       }
       return findings;
     },
+  },
+  {
+    id: "local-address",
+    severity: "error",
+    check(page) {
+      const findings = [];
+      for (const { block, node, path } of nodesOf(page)) {
+        const types = typesOf(node).filter((t) =>
+          LOCAL_BUSINESS_TYPES.includes(t),
+        );
+        if (types.length === 0) continue;
+        const address = node.address;
+        let problem = null;
+        if (address === undefined) {
+          problem = "no address";
+        } else if (!isObject(address)) {
+          const kind =
+            address === null
+              ? "null"
+              : Array.isArray(address)
+                ? "an array"
+                : `a ${typeof address}`;
+          problem = `address is ${kind}, not an object`;
+        } else {
+          const missing = ADDRESS_FIELDS.filter(
+            (f) => typeof address[f] !== "string" || isBlank(address[f]),
+          );
+          if (missing.length) {
+            problem = `address has no non-empty string ${missing.join(", ")}`;
+          }
+        }
+        if (problem) {
+          findings.push(
+            `${where(block, path)}: @type ${types.join(", ")}: ${problem}`,
+          );
+        }
+      }
+      return findings;
+    },
+  },
+  {
+    id: "url-lowercase",
+    severity: "error",
+    check: (page, site) =>
+      uppercasePageUrls([ownUrlOccurrence(page), ...urlsOf(page)], site),
+    checkSitemap: (site, occurrences) => uppercasePageUrls(occurrences, site),
   },
   {
     id: "asset-missing",

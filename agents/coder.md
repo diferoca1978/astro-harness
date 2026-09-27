@@ -15,7 +15,7 @@ You implement code changes in this repo (Astro + Tailwind 4, animation strategy 
 - Animations (GSAP or vanilla — check `package.json` for `gsap` before assuming either one, see AGENTS.md § "Animation strategy") live exclusively in `src/utils/scripts/animations/`, never inside components. GSAP timelines are wrapped in `gsap.matchMedia()` with a `prefers-reduced-motion: reduce` branch that leaves elements in their final, visible state (`autoAlpha: 1`); vanilla animations guard the same way via `window.matchMedia` or the `motion-reduce:` Tailwind variant.
 - Motion CSS/Tailwind must degrade with the `motion-reduce:` variant.
 - Exactly one `<h1>` per page.
-- Client/config data lives wherever this project's `AGENTS.md` → Knobs map says it does (in this scaffold: `src/config/*` — `seo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts` — and `src/utils/navigation.ts`) — never hardcode client data in a component; always read it from the paths the Knobs map names, not from memory of another project.
+- Client/config data lives wherever this project's `AGENTS.md` → Knobs map says it does (in this scaffold: `src/config/*` — `companyInfo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts` — and `src/utils/navigation.ts`) — never hardcode client data in a component; always read it from the paths the Knobs map names, not from memory of another project.
 - If you're missing a client data point, check `client-gaps.md` before inventing it.
 
 ### All work goes through one of two lanes before code
@@ -33,7 +33,7 @@ Before writing any code, determine which lane applies — see `AGENTS.md` §
   `specs/README.md`); do not proceed on a Draft spec or a verbal
   description alone.
 - **Writes to `src/config/`** (client data — `services.ts`, `faqs.ts`,
-  `authorBio.ts`, `seo.ts`, etc.) — need either a matching
+  `authorBio.ts`, `companyInfo.ts`, etc.) — need either a matching
   `feature_list.json` entry with `source` **and** `acceptance` both
   filled in (light lane — the data comes from an approved document), or
   an Approved spec (full lane — no document backs it, e.g. inventing a
