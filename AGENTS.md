@@ -148,6 +148,7 @@ The whole point of the scaffold is this boundary.
 | `lang` / locale                                | `src/config/companyInfo.ts` → `LOCALE` (`<html lang>`, `og:locale` and `inLanguage` derive from it)                                                                                           | Default `es-CO`                            |
 | Pages                                          | `src/pages/*.astro`                                                                                                                                                                            | Brief (§ sitemap)                          |
 | Model per role (subagent tier→model)           | `harness/runtimes/*.json` (`tiers` map, per runtime) · `agents/*.md` (`tier:` field, never a raw model string)                                                                                | Scaffold-level, not per-client — see `harness/README.md` |
+| Modules (e.g. a future blog)                   | `harness/modules/<name>/` (source, in this repo) · installed into a client via `~/scripts/add-module.sh` → files land in their normal `src/` location, tracked in the client's `MODULES.md` | `harness/modules/README.md`; run manually only when a client's brief needs the module |
 
 > **Colors** live **only** in `global.css` because Tailwind 4 reads them there
 > to generate utilities. Never mirror colors into a `.ts` file — that creates
@@ -402,6 +403,8 @@ must land in the *same* change once implementation starts.
 | Add/rename a config file in `src/config/`           | **Config** section · **Knobs map**                                                                                                                                                                                                                          |
 | Add, remove or rename a generator in `src/config/seo.ts`, a helper in `src/utils/url.ts` or `JsonLd.astro`, or change its signature | `.claude/skills/seo-guide-lines/SKILL.md` § "Core API" · every reference in `seo-guide-line.md` |
 | Add, remove or rename a builder in `src/utils/llms.ts`, or change what `src/pages/llms.txt.ts` includes | this file's Routing section, if the route's own shape changes · `harness/check-seo.mjs`'s `llms-links-resolve` rule, if the same-site link shape changes |
+| Add or change a module under `harness/modules/<name>/` | `harness/modules/README.md`, if the directory or `patch.json` convention itself changes |
+| Add, remove or rename a core extension-point marker (`// add-module:<point-id>`) | `harness/modules/README.md`'s registry table · every module's `patch.json` that targets it |
 | Add a new font slot                                 | the 3 font files (see Knobs map)                                                                                                                                                                                                                            |
 | Change folder conventions                           | **Components** section · the structure note in `front-end-astro` SKILL.md                                                                                                                                                                                   |
 | Add or change a subagent role, its tier, or add a runtime | `agents/<role>.md` · `harness/runtimes/*.json` · re-run `bind-runtime.sh` for **every** runtime · commit the regenerated output · **Orchestration model** routing table |
@@ -446,6 +449,23 @@ is built by hand in the client repo, and it must follow these rules:
 8. Add Cloudflare Turnstile only once real spam appears. A honeypot does not
    stop direct calls to the endpoint. Turnstile costs a secret environment
    variable, server-side verification and a mention in the privacy policy.
+
+### Modules — installed on demand with `add-module`
+
+The scaffold ships no optional modules by default — `setup-client-project.sh`
+strips `harness/modules/` from every clone, same as it drops `.git`. Modules
+live in `harness/modules/<name>/` in **this** repo, ready for a client to opt
+into once its brief actually needs one (the planned blog module is the first,
+see `specs/09-*`).
+
+A client gets a module by running `~/scripts/add-module.sh <name>
+<path-to-client-project>` — it copies the module's files into the client's
+own `src/` tree and patches the core's marked extension points to wire them
+in. Installed modules are recorded in the client project's own `MODULES.md`.
+
+See `harness/modules/README.md` for the extension-point marker convention
+(`// add-module:<point-id>`), the `patch.json` shape, and the current
+registry of extension points that exist in the core.
 
 ### Spec-first: all work goes through one of two lanes
 

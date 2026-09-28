@@ -43,4 +43,5 @@ export function llmsTxt(header: string, sections: string[]): string {
 // after the core's own sections in src/pages/llms.txt.ts. Empty in the core; add-module
 // (spec 08) patches this one line when a module (the blog, spec 09) adds its own section.
 
+// add-module:llms-extra-sections
 export const EXTRA_SECTIONS: string[] = [];
