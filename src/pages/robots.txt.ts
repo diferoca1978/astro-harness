@@ -6,22 +6,22 @@ User-agent: *
 Allow: /
 
 
-User-agent: GPTBot
-Allow: /
-
 User-agent: ChatGPT-User
 Allow: /
 
-User-agent: ClaudeBot
+User-agent: OAI-SearchBot
 Allow: /
 
-User-agent: Google-Extended
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Perplexity-User
 Allow: /
 
 User-agent: PerplexityBot
-Allow: /
-
-User-agent: CCBot
 Allow: /
 
 Sitemap: ${sitemapURL.href}

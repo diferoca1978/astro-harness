@@ -26,7 +26,7 @@
 //      more than one origin and no --site (--dist); with --url, also sitemaps
 //      that list no page <loc>, or none on the --url site
 //
-// Rules (17), with their severity:
+// Rules (18), with their severity:
 //   jsonld-parse        error    Every JSON-LD block parses, declares a
 //                                schema.org @context, and each top-level node
 //                                (or @graph member) has a @type.
@@ -81,6 +81,11 @@
 //   deprecated-type     warning  No node has the @type ProfessionalService,
 //                                SearchAction or HowTo.
 //   external-url-http   warning  Every external URL in the JSON-LD uses https:.
+//   llms-links-resolve  error    Every same-site, page-shaped URL inside a
+//                                markdown link ([text](url)) in llms.txt, and
+//                                in every llms/*.txt leaf discovered by
+//                                following such a link from it, leads to a
+//                                page.
 //   With --strict, every warning counts as an error.
 //
 // Pages: kind 404 is dist/404.html (--dist only; if empty, it gets only
@@ -125,6 +130,9 @@
 //   CLI → shared page model + tag reader → rules → input adapters → runner.
 //   An adapter (--dist or --url) turns its input into pages and a site
 //   context. The rules see only those two, never the mode.
+//   A rule may also define checkSite(site), run once per whole site instead
+//   of once per page, for findings grouped under one of site.llmsDocs' own
+//   labels rather than under a page or a sitemap file.
 // ============================================================================
 
 import { readFile, readdir, stat } from "node:fs/promises";
@@ -815,6 +823,13 @@ function distinctUrls(occurrences) {
 const describe = (u) => `${u.raw} (${u.where})`;
 const pathKind = (url) => urlKind(new URL(url).pathname);
 
+const MARKDOWN_LINK = /\[[^\]]*\]\(([^)\s]+)\)/g;
+
+/** URLs captured inside markdown-style links ([text](url)) in `text`, as written (not resolved). */
+function markdownLinks(text) {
+  return [...text.matchAll(MARKDOWN_LINK)].map((m) => m[1]);
+}
+
 /** What canonical-self reports for a page; [] when it passes. */
 function canonicalSelfProblems(page) {
   const canonicals = linksByRel(page, "canonical");
@@ -946,13 +961,18 @@ const ownUrlOccurrence = (page) => ({
 // Each rule: { id, severity: 'error' | 'warning', check(page, site) }, plus
 // an optional checkSitemap(site, occurrences) for the rules that also look at
 // the sitemaps' page <loc>s (their findings are grouped under the sitemap
-// file, see runRules).
-// check returns (or resolves to) an array of messages, one per finding.
+// file, see runRules), and/or an optional checkSite(site), run once for the
+// whole site rather than once per page.
+// check and checkSitemap return (or resolve to) an array of messages, one per
+// finding. checkSite returns (or resolves to) an array of { label, message },
+// one per finding, where label is the site.llmsDocs entry it belongs to.
 // `site` is the adapter's site context:
 //   site.origin       the site's origin, e.g. https://example.com
 //   site.pages        every page model
 //   site.sitemapLocs  every page <loc> in the sitemaps: [{ loc, source }],
 //                     where source names the sitemap that lists it
+//   site.llmsDocs     llms.txt and its llms/*.txt leaves, if any:
+//                     [{ label, text }]
 //   site.resolve(url) async; for a same-site URL it returns
 //                     { exists, kind: 'page' | 'asset', page, inPageSet,
 //                       target, reason }
@@ -1321,6 +1341,33 @@ const RULES = [
         .map((u) => `${describe(u)} uses http:, not https:`);
     },
   },
+  {
+    id: "llms-links-resolve",
+    severity: "error",
+    async checkSite(site) {
+      const findings = [];
+      for (const doc of site.llmsDocs) {
+        for (const raw of markdownLinks(doc.text)) {
+          let url;
+          try {
+            url = new URL(raw, site.origin).href;
+          } catch {
+            continue;
+          }
+          if (!isSameSite(url, site.origin) || pathKind(url) !== "page")
+            continue;
+          const r = await site.resolve(url);
+          if (!r.exists) {
+            findings.push({
+              label: doc.label,
+              message: `${raw} (in ${doc.label}) leads to no page: ${r.reason}`,
+            });
+          }
+        }
+      }
+      return findings;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1510,6 +1557,25 @@ function resolveInDist(url, files, pagesByFile) {
   };
 }
 
+/** llms.txt and llms/*.txt files present in the build: [{ label, text }]. */
+async function readLlmsDocs(dir, files) {
+  const docs = [];
+  if (files.has("llms.txt")) {
+    docs.push({
+      label: "llms.txt",
+      text: await readFile(path.join(dir, "llms.txt"), "utf8"),
+    });
+  }
+  const leaves = [...files].filter((f) => /^llms\/[^/]+\.txt$/.test(f)).sort();
+  for (const rel of leaves) {
+    docs.push({
+      label: rel,
+      text: await readFile(path.join(dir, rel), "utf8"),
+    });
+  }
+  return docs;
+}
+
 async function loadDist(dirArg, siteOrigin) {
   const dir = path.resolve(dirArg);
   let info;
@@ -1545,6 +1611,7 @@ async function loadDist(dirArg, siteOrigin) {
     );
   }
   const pagesByFile = new Map(pages.map((p) => [p.label, p]));
+  const llmsDocs = await readLlmsDocs(dir, files);
 
   return {
     heading: `check-seo --dist ${dirArg} · origin ${origin} (${siteOrigin ? "--site" : sitemap.root})`,
@@ -1553,6 +1620,7 @@ async function loadDist(dirArg, siteOrigin) {
       origin,
       pages,
       sitemapLocs: sitemap ? sitemap.pageLocs : [],
+      llmsDocs,
       resolve: async (url) => resolveInDist(url, files, pagesByFile),
     },
   };
@@ -1758,6 +1826,46 @@ async function readUrlSitemaps(origin, http) {
   return { rootSource, pageLocs };
 }
 
+/** Same-site URLs found in markdown links in `text`, resolved against `origin`, whose pathname matches `pattern`. */
+function sameSiteLinksMatching(text, origin, pattern) {
+  const urls = new Set();
+  for (const raw of markdownLinks(text)) {
+    let url;
+    try {
+      url = new URL(raw, origin).href;
+    } catch {
+      continue;
+    }
+    if (isSameSite(url, origin) && pattern.test(new URL(url).pathname)) {
+      urls.add(url);
+    }
+  }
+  return urls;
+}
+
+/**
+ * llms.txt and any llms/*.txt leaves it links to, fetched from the live site.
+ * A non-200 llms.txt gives no docs at all. A leaf that does not answer 200 is
+ * skipped (its own link, being asset-shaped, is not checked by
+ * llms-links-resolve anyway — only its discovery as a doc is skipped here).
+ */
+async function readLlmsDocsUrl(origin, http) {
+  const docs = [];
+  const llmsUrl = new URL("/llms.txt", origin).href;
+  const res = await http.get(llmsUrl);
+  if (res.error || res.status !== 200) return docs;
+  const text = res.body ?? "";
+  docs.push({ label: "llms.txt", text });
+  const leafUrls = sameSiteLinksMatching(text, origin, /^\/llms\/.*\.txt$/);
+  for (const url of leafUrls) {
+    const leafRes = await http.get(url);
+    if (leafRes.error || leafRes.status !== 200) continue;
+    const label = new URL(url).pathname.replace(/^\//, "");
+    docs.push({ label, text: leafRes.body ?? "" });
+  }
+  return docs;
+}
+
 async function loadUrl(origin) {
   const http = httpClient();
   const sitemap = await readUrlSitemaps(origin, http);
@@ -1851,10 +1959,11 @@ async function loadUrl(origin) {
   const skipped = otherHosts.size
     ? `\n(page <loc>s on ${[...otherHosts].join(", ")} are not on this site and were not checked)`
     : "";
+  const llmsDocs = await readLlmsDocsUrl(origin, http);
   return {
     heading: `check-seo --url ${origin} · sitemaps from ${sitemap.rootSource}${skipped}`,
     pages,
-    site: { origin, pages, sitemapLocs: sitemap.pageLocs, resolve },
+    site: { origin, pages, sitemapLocs: sitemap.pageLocs, llmsDocs, resolve },
   };
 }
 
@@ -1888,8 +1997,9 @@ function sitemapOccurrences(site) {
 
 /**
  * Runs every rule on every page, then the sitemap checks on each sitemap's
- * page <loc>s. Returns [{ label, findings }]: the pages first, then one entry
- * per sitemap file.
+ * page <loc>s, then every checkSite rule once against the whole site.
+ * Returns [{ label, findings }]: the pages first, then one entry per sitemap
+ * file, then one entry per site.llmsDocs document.
  */
 async function runRules(pages, site) {
   const results = [];
@@ -1897,6 +2007,7 @@ async function runRules(pages, site) {
     const findings = [];
     const empty404 = page.kind === "404" && isBlank(page.html);
     for (const rule of RULES) {
+      if (!rule.check) continue;
       if (empty404 && rule.id !== "404-empty") continue;
       for (const message of await rule.check(page, site)) {
         findings.push({ rule: rule.id, severity: rule.severity, message });
@@ -1914,6 +2025,19 @@ async function runRules(pages, site) {
     }
     results.push({ label: source, findings });
   }
+  const bySiteLabel = new Map(site.llmsDocs.map((doc) => [doc.label, []]));
+  for (const rule of RULES) {
+    if (!rule.checkSite) continue;
+    for (const { label, message } of await rule.checkSite(site)) {
+      if (!bySiteLabel.has(label)) bySiteLabel.set(label, []);
+      bySiteLabel
+        .get(label)
+        .push({ rule: rule.id, severity: rule.severity, message });
+    }
+  }
+  for (const [label, findings] of bySiteLabel) {
+    results.push({ label, findings, alwaysShow: true });
+  }
   return results;
 }
 
@@ -1922,9 +2046,12 @@ function printReport(heading, results, pageCount, opts) {
   const lines = [heading, ""];
   let errors = 0;
   let warnings = 0;
-  for (const { label, findings } of results) {
-    if (findings.length === 0) continue;
+  for (const { label, findings, alwaysShow } of results) {
+    if (findings.length === 0 && !alwaysShow) continue;
     lines.push(label);
+    if (findings.length === 0) {
+      lines.push("  0 findings");
+    }
     for (const f of findings) {
       if (f.severity === "error") errors++;
       else warnings++;
