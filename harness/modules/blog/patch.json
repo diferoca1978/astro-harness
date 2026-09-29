@@ -1,0 +1,7 @@
+[
+  {
+    "point": "llms-extra-sections",
+    "file": "src/utils/llms.ts",
+    "insert": "export { EXTRA_SECTIONS } from '@/utils/llmsBlogSections';"
+  }
+]

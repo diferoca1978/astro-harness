@@ -13,6 +13,9 @@ export default defineConfig({
   // (sed s|site: 'https://.*'|...|). Required by robots.txt.ts and @astrojs/sitemap.
   site: 'https://example.com',
 
+  // Every page URL ends in '/'; siteUrl() in src/utils/url.ts builds them the same way.
+  trailingSlash: 'always',
+
   fonts: [
     {
       name: "Plus Jakarta Sans",

@@ -1,0 +1,27 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import { generateNotFoundSEO } from "@/config/seo";
+---
+
+<MainLayout seoProps={generateNotFoundSEO({ title: "Página no encontrada" })}>
+  <section class="bg-soft-beige px-4 py-24 md:py-32">
+    <div class="mx-auto flex max-w-xl flex-col items-center text-center">
+      <span
+        aria-hidden="true"
+        class="mb-8 block h-1 w-12 rounded-full bg-olive"
+      ></span>
+      <h1 class="text-4xl font-bold tracking-tight text-balance text-purple-dark md:text-5xl">
+        Página no encontrada
+      </h1>
+      <p class="mt-4 text-lg text-pretty text-purple-accent">
+        La página que buscas no existe o cambió de dirección.
+      </p>
+      <a
+        href="/"
+        class="mt-10 inline-flex items-center rounded-full bg-purple-accent px-6 py-3 font-semibold text-soft-bg hover:bg-purple-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-dark"
+      >
+        Volver al inicio
+      </a>
+    </div>
+  </section>
+</MainLayout>

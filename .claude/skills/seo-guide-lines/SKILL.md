@@ -29,11 +29,29 @@ seo-guide-line.md
 
 **ALWAYS read this guide first** to understand:
 
-- The project's SEO architecture (`src/config/seo.ts`)
+- The project's SEO architecture (data in `src/config/companyInfo.ts`, generators in `src/config/seo.ts` — see **Core API** below)
 - Implementation patterns for different page types
 - Schema markup generators available
 - E-E-A-T principles for AI trust
 - Complete code templates ready to use
+
+## Core API
+
+The SEO core as the code has it. Where `seo-guide-line.md` disagrees with this section, this section wins: the guide's full rewrite is still pending.
+
+- **Data**: `src/config/companyInfo.ts` holds `COMPANY_INFO` (company data, with `business` either `remote` → `Organization`, or `local` → a `LocalBusinessType` subtype with a street address) and `LOCALE` (BCP 47). `src/config/authorBio.ts` holds `AUTHORS: Author[]`, the one model for authors and founders; each `slug` gives the Person `@id`.
+- **`siteUrl(path)`** (`src/utils/url.ts`): the absolute URL on this site for a page, an asset, an `@id` or a breadcrumb item. `path` starts with `/`; a page path must be lowercase and gets a trailing `/`. Never read `import.meta.env.SITE` or hardcode the domain.
+- **`mediaUrl(src)`** (`src/utils/url.ts`): for media fields only — `generatePageSEO`'s `image`, `COMPANY_INFO.logo` and `image`, and `Author.image`. It takes a path on this site, an `https://` URL (a CDN), or a protocol-relative `//host/…` (it becomes `https:`). `http:` throws.
+- **`generatePageSEO({ title, description, image?, noindex?, locale? })`**: a page's `seoProps`.
+- **`generateNotFoundSEO({ title })`**: the 404's `seoProps` — a title and `noindex`, with no canonical, description, Open Graph or Twitter.
+- **`generateBusinessSchema()`**: the business node (`@id` `/#organization`). `MainLayout` emits it on `/` only.
+- **`generateBusinessRef()`**: `{ '@type': 'Organization', '@id', name, url }`, nested in a node on an inner page (`provider`, `publisher`…). Never its own block.
+- **`generateWebSiteSchema(locale?)`**: the `WebSite` node. `MainLayout` emits it on `/` only.
+- **`generatePersonSchema(author)`**: a Person from an `Author` (`@id` `/#person-<slug>`, `worksFor` the business).
+- **`generateHomeSchemas(locale?)`**: the business, the `WebSite` and one Person per founder — what `MainLayout` emits on `/`. It throws on a founder slug with no `Author`.
+- **`generateFAQSchema(faqs)`**: a `FAQPage` for a visible FAQ section, which emits it with `JsonLd.astro`.
+- **`generateBreadcrumbSchema(items)`**: a `BreadcrumbList` from `{ name, path }` items (at least 2, never on `/`), passed through `MainLayout`'s `schemas`.
+- **`JsonLd.astro`** (`src/components/`): `<JsonLd schema={…} />` serializes and escapes one block. It is the only place that writes `application/ld+json`.
 
 ## When This Skill Triggers
 
@@ -93,12 +111,13 @@ Then identify what the user needs:
 - **New page creation?** → Use the appropriate Pattern (1-5) from the guide
 - **Existing page optimization?** → Audit current implementation
 - **Configuration setup?** → Help with `COMPANY_INFO`
-- **Schema markup?** → Use generators from `src/config/seo.ts`
+- **Schema markup?** → Use the generators in `src/config/seo.ts` (see **Core API**); company data comes from `src/config/companyInfo.ts`
 
 ### Step 2: Locate Relevant Files
 
 ```bash
-# Find the SEO configuration
+# Find the SEO configuration: the data, then the generators
+Read: src/config/companyInfo.ts
 Read: src/config/seo.ts
 
 # Find existing pages (if optimizing)
@@ -154,7 +173,7 @@ After making changes, verify:
 - [ ] H3s capture long-tail variants and consideration-stage queries (e.g. "how much does X cost?", "X vs Y differences")
 - [ ] Heading hierarchy is logical (H1 → H2 → H3), never skipped
 - [ ] Images have descriptive alt text
-- [ ] Schemas describe only what is visible and true on the page (Organization + WebSite come from `MainLayout` — don't add them again)
+- [ ] Schemas describe only what is visible and true on the page (`MainLayout` emits the business, the `WebSite` and the founders on `/` only — never add them to a page; noindex pages and the 404 get no JSON-LD)
 - [ ] Breadcrumb schema on non-homepage pages
 - [ ] Internal links with descriptive anchor text
 
@@ -185,7 +204,7 @@ Understanding this dynamic prevents misplaced priorities:
 Never hardcode company data. Always import from `COMPANY_INFO`:
 
 ```typescript
-import { COMPANY_INFO } from "@/config/seo";
+import { COMPANY_INFO } from "@/config/companyInfo";
 
 // ✅ CORRECT
 <p>Phone: {COMPANY_INFO.phone}</p>
@@ -198,10 +217,12 @@ import { COMPANY_INFO } from "@/config/seo";
 
 A JSON-LD schema goes on a page only when it describes something visible and true on that page. Never add one to chase a rich result, and never fill one with data the page doesn't show:
 
-- **Every page**: `MainLayout.astro` already appends `ORGANIZATION_SCHEMA` + `WEBSITE_SCHEMA` — don't add them again. Pass extra schemas through `<MainLayout seoProps={…} schemas={[…]}>`.
-- **Non-home pages**: `generateBreadcrumbSchema()`, matching the page's real path.
-- **Visible FAQ section**: `generateFAQSchema()`, built from the same questions and answers the section renders, taken from `faqs.ts` or the brief — never invented.
-- **A real person shown on the page**: `generatePersonSchema()`, only with data from `authorBio.ts` or the brief.
+- **Home page (`/`)**: `MainLayout.astro` emits the business node, the `WebSite` and one Person per founder (`generateHomeSchemas()`) on `/` only. Never add them to any page yourself.
+- **Inner pages**: the page passes its `generateBreadcrumbSchema()`, matching its real path, through `<MainLayout seoProps={…} schemas={[…]}>`.
+- **A section that shows what a schema describes** (for example a visible FAQ section) emits that schema itself with `<JsonLd schema={…} />`, next to the content. A FAQ's `generateFAQSchema()` is built from the same questions and answers the section renders, taken from `faqs.ts` or the brief — never invented.
+- **A node on an inner page that refers to the business** (a `Service`'s `provider`, an `Article`'s `publisher`…) nests `generateBusinessRef()`. Never copy the full business node onto an inner page.
+- **Noindex pages and the 404** get no JSON-LD. `MainLayout` drops every schema when `seoProps.noindex` is true.
+- **A real person shown on the page**: `generatePersonSchema(author)` takes an `Author` from `authorBio.ts` — never data the brief doesn't give.
 
 ### 3. E-E-A-T is Critical for GEO
 
@@ -265,7 +286,7 @@ Even small differences ("Suite 200" vs "Ste 200") hurt local rankings.
 ### Task: Create a New Service Page
 
 1. Read the guide's **Pattern 1** (Service Page Template)
-2. Read `COMPANY_INFO` from `src/config/seo.ts`
+2. Read `COMPANY_INFO` from `src/config/companyInfo.ts`
 3. Copy the Pattern 1 template
 4. Replace all `[placeholders]` with actual data
 5. Implement required schemas
@@ -281,17 +302,22 @@ Even small differences ("Suite 200" vs "Ste 200") hurt local rankings.
 
 ### Task: Set Up COMPANY_INFO
 
-1. Read current `src/config/seo.ts`
+1. Read current `src/config/companyInfo.ts`
 2. Validate all required fields are filled
-3. Check NAP consistency
-4. Suggest improvements based on industry examples
+3. Set `business`:
+   - `remote` (an `Organization`) unless the brief gives a street address where the business receives visitors. A `remote` business may keep city, region and country, never a street, a postal code or `geo`.
+   - `local` for a real address the site shows. It takes a subtype from `LocalBusinessType`. When the brief needs a subtype the union doesn't have, add it there **and** to `LOCAL_BUSINESS_TYPES` in `harness/check-seo.mjs`.
+4. `founders` lists only the authors the brief names and the home page shows, by `slug`. Each needs its `Author` in `authorBio.ts`, or the build fails.
+5. `LOCALE` (BCP 47, default `es-CO`): `<html lang>`, `og:locale` and `WebSite.inLanguage` derive from it. Change it only when the site's language is not `es-CO`.
+6. Check NAP consistency
+7. Suggest improvements based on industry examples
 
 ### Task: Implement FAQ Schema
 
 1. Take the questions and answers from `faqs.ts` or the brief — never invent them. If neither has them, record the gap in `client-gaps.md` instead of writing FAQs.
 2. Render them in a visible FAQ section on the page
 3. Build the schema with `generateFAQSchema()` from the same data, so the FAQPage JSON-LD matches the visible text
-4. Include the schema in the page's `schemas` array
+4. Emit the schema from the FAQ section itself with `<JsonLd schema={generateFAQSchema(…)} />`, next to the questions — not through the page's `schemas` array
 
 ## Output Format
 
@@ -326,8 +352,11 @@ When making changes, always:
 ## Key Files Reference
 
 - **SEO Guide**: `seo-guide-line.md`
-- **SEO Config**: `src/config/seo.ts`
+- **Company data and locale**: `src/config/companyInfo.ts`
+- **SEO generators**: `src/config/seo.ts`
+- **URL helpers**: `src/utils/url.ts`
 - **SeoHead Component**: `src/components/SeoHead.astro`
+- **JSON-LD Component**: `src/components/JsonLd.astro`
 - **Page Templates**: See Patterns 1-5 in the guide
 - **Technical Edge Cases**: See `## Technical SEO Appendix` in `seo-guide-line.md` for:
   - `robots.txt` patterns — only relevant for non-Astro projects (Astro generates this at build time)

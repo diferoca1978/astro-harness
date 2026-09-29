@@ -25,22 +25,36 @@
 
 ### 🏗️ System Structure
 
-The project uses a centralized SEO system in `src/config/seo.ts` that provides:
+The project uses a centralized SEO system: client data in `src/config/companyInfo.ts` and `src/config/authorBio.ts`, generators in `src/config/seo.ts`:
 
 ```
-src/config/seo.ts
-├── Type Definitions (TypeScript interfaces)
-├── Company Configuration (COMPANY_INFO)
+src/config/companyInfo.ts (data only)
+├── Company Configuration (COMPANY_INFO, with business: remote | local)
+├── LOCALE (BCP 47)
+└── Type Definitions (CompanyInfo, Business, LocalBusinessType)
+
+src/config/authorBio.ts (data only)
+└── AUTHORS: Author[] (authors and founders; each slug gives the Person @id)
+
+src/config/seo.ts (generators only)
+├── Type Definitions (JSONLDSchema, BreadcrumbItem)
 ├── Dynamic SEO Generators
 │   ├── generatePageSEO()
-│   └── generateSEOWithAlternates()
+│   └── generateNotFoundSEO()
 └── JSON-LD Schema Generators
-    ├── ORGANIZATION_SCHEMA
-    ├── WEBSITE_SCHEMA
+    ├── generateBusinessSchema()
+    ├── generateBusinessRef()
+    ├── generateWebSiteSchema()
     ├── generatePersonSchema()
+    ├── generateHomeSchemas()
     ├── generateFAQSchema()
-    ├── generateVideoSchema()
     └── generateBreadcrumbSchema()
+
+src/utils/url.ts
+├── siteUrl()
+└── mediaUrl()
+
+src/components/JsonLd.astro (serializes and escapes one JSON-LD block)
 ```
 
 ### 🎯 Fundamental Principles
@@ -113,7 +127,7 @@ export const COMPANY_INFO: CompanyInfo = {
 
 **⚠️ CRITICAL RULES**:
 
-- **Never hardcode** - Always `import { COMPANY_INFO } from "@/config/seo"`
+- **Never hardcode** - Always `import { COMPANY_INFO } from "@/config/companyInfo"`
 - **NAP Consistency** - Name/Address/Phone MUST match Google Business Profile exactly
 - **No placeholders** - Fill with real data (test data hurts SEO)
 
@@ -316,7 +330,7 @@ Based on existing pages, prioritize SEO for:
 
 2. **Homepage** (`/`):
    - Use `generatePageSEO()`
-   - `ORGANIZATION_SCHEMA` and `WEBSITE_SCHEMA` come from `MainLayout` on every page (don't add them again)
+   - The home schemas (the business node, the `WebSite` and the founders) come from `MainLayout`, which emits them on `/` only (don't add them again)
    - Feature primary keywords prominently
 
 3. **About Page**:
@@ -480,7 +494,7 @@ Each paragraph should function independently. **Critical for service pages.**
 
 #### Organization and Website Schemas
 
-`MainLayout.astro` appends `ORGANIZATION_SCHEMA` and `WEBSITE_SCHEMA` to every page. Don't add them again in a page's `schemas`.
+`MainLayout.astro` emits the home schemas (the business node, the `WebSite` and the founders) on `/` only. Don't add them again in a page's `schemas`.
 
 These schemas are pre-configured in `src/config/seo.ts` and include:
 
@@ -964,8 +978,8 @@ const seoProps = generatePageSEO({
   description: "[150-160 characters: what you do, where, and a call to action]"
 });
 
-// ORGANIZATION_SCHEMA (your company/business details) and WEBSITE_SCHEMA
-// (website-level information) are appended to every page by MainLayout.
+// The home schemas (the business node, the WebSite and the founders) are
+// emitted by MainLayout on "/" only.
 // Don't add them here.
 const schemas = [];
 ---
@@ -1134,7 +1148,7 @@ const schemas = [];
 - Link to every service page from homepage
 - Include company stats (builds trust/authority)
 - Add client testimonials with real names (E-E-A-T)
-- Make sure ORGANIZATION_SCHEMA and WEBSITE_SCHEMA in `Seo.ts` have accurate data
+- Make sure the home schemas that `MainLayout` emits on `/` have accurate data: they are built from `COMPANY_INFO` (`src/config/companyInfo.ts`) and the founders' `Author` entries (`src/config/authorBio.ts`)
 
 ### 🎨 Pattern 3: About Page Implementation (E-E-A-T Critical)
 
@@ -1150,9 +1164,10 @@ import SeoHead from "@/components/SeoHead.astro";
 import {
   generatePageSEO,
   generatePersonSchema,
-  generateBreadcrumbSchema,
-  COMPANY_INFO
+  generateBreadcrumbSchema
 } from "@/config/seo";
+import { COMPANY_INFO } from "@/config/companyInfo";
+import { AUTHORS } from "@/config/authorBio";
 
 const seoProps = generatePageSEO({
   title: "About Us - [Primary Service] Experts",
@@ -1163,32 +1178,11 @@ const seoProps = generatePageSEO({
 });
 
 // Person Schema for founder/key team member (CRITICAL for E-E-A-T)
-// If you have COMPANY_INFO.founders configured:
-const founderSchema = generatePersonSchema({
-  name: COMPANY_INFO.founders?.[0] || "[Founder full name]",
-  // Example: "Jane Doe" or "Dr. Michael Chen" or "Sarah Williams, CPA"
-  alternateName: "[Nickname or Professional Title]",
-  // Example: "Jane D." or "Dr. Chen" or "Sarah Williams"
-  description: "[Professional background, expertise, credentials. 2-3 sentences mentioning years of experience, education, specialization.]",
-  // Example: "Web design expert with 15+ years of experience. Graduated from MIT with a degree in Computer Science. Specializes in conversion-focused design for SaaS companies."
-  jobTitle: "[Title]",
-  // Example: "CEO & Founder" or "Managing Partner" or "Lead Designer"
-  image: "/images/team/[founder-slug].jpg",
-  url: "/about", // resolved against the site URL
-  knowsAbout: [
-    // Add specific expertise areas:
-    "[Specific Skill 1]",
-    "[Specific Skill 2]",
-    "[Specific Skill 3]"
-  ],
-  // Example: ["Responsive Web Design", "UX Strategy", "Brand Development"]
-  sameAs: [
-    COMPANY_INFO.socialMedia.linkedin,
-    // Add founder's personal profiles if available:
-    // "https://twitter.com/foundername",
-    // "https://www.linkedin.com/in/foundername"
-  ]
-});
+// The founder is an `Author` in src/config/authorBio.ts (name, role, bio, image,
+// url, socialMedia); COMPANY_INFO.founders lists Author slugs:
+const founder = AUTHORS.find((a) => a.slug === COMPANY_INFO.founders?.[0]);
+if (!founder) throw new Error("No Author in authorBio.ts for the founder slug");
+const founderSchema = generatePersonSchema(founder);
 
 const breadcrumbs = [
   { name: "Home", path: "/" },
@@ -1647,7 +1641,7 @@ If you create individual project pages (`/projects/[slug].astro`), include:
 - Challenges overcome
 - Link to live project (if allowed)
 
-### 🎨 Pattern 5: Contact Page with LocalBusiness Schema
+### 🎨 Pattern 5: Contact Page
 
 **Universal Contact Page Template**
 
@@ -1660,68 +1654,25 @@ import MainLayout from "@/layouts/MainLayout.astro";
 import SeoHead from "@/components/SeoHead.astro";
 import {
   generatePageSEO,
-  generateBreadcrumbSchema,
-  COMPANY_INFO
+  generateBreadcrumbSchema
 } from "@/config/seo";
+import { COMPANY_INFO } from "@/config/companyInfo";
 
 const seoProps = generatePageSEO({
   title: "Contact Us - [City, State]",
   // Example: "Contact Us - Austin, Texas"
-  description: `[Action verb] for diseño web. Office at ${COMPANY_INFO.address.street}, Bogotá. Call ${COMPANY_INFO.phone} or email ${COMPANY_INFO.email}.`,
-  // Example: "Contact us for web design services. Office at 123 Main St, Austin, TX. Call (512) 555-0123 or email hello@designco.com."
+  description: `[Action verb] for diseño web. Call ${COMPANY_INFO.phone} or email ${COMPANY_INFO.email}.`,
+  // Example: "Contact us for web design services. Call (512) 555-0123 or email hello@designco.com."
 });
 
-// LocalBusiness Schema - CRITICAL for Local SEO
-// This tells Google your exact location, hours, and how to contact you
-const localBusinessSchema = {
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness", // or a more specific subtype: "Store", "Restaurant", etc.
-  "@id": new URL("#localbusiness", Astro.site).href,
-  "name": COMPANY_INFO.name,
-  "image": new URL(COMPANY_INFO.image, Astro.site).href,
-  "description": COMPANY_INFO.description,
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": COMPANY_INFO.address.street,
-    "addressLocality": COMPANY_INFO.address.city,
-    "addressRegion": COMPANY_INFO.address.region,
-    "postalCode": COMPANY_INFO.address.postalCode,
-    "addressCountry": COMPANY_INFO.address.countryCode
-  },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": COMPANY_INFO.geo?.latitude,
-    "longitude": COMPANY_INFO.geo?.longitude
-  },
-  "url": new URL("/", Astro.site).href,
-  "telephone": COMPANY_INFO.phone,
-  "email": COMPANY_INFO.email,
-  "priceRange": "$$", // Update: $ (budget), $$ (moderate), $$$ (expensive), $$$$ (luxury)
-  // Business Hours - UPDATE WITH YOUR ACTUAL HOURS
-  "openingHoursSpecification": [
-    {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      "opens": "09:00",  // Update with your hours
-      "closes": "17:00"  // 24-hour format
-    }
-    // Add Saturday/Sunday if applicable:
-    // {
-    //   "@type": "OpeningHoursSpecification",
-    //   "dayOfWeek": "Saturday",
-    //   "opens": "10:00",
-    //   "closes": "14:00"
-    // }
-  ],
-  "sameAs": Object.values(COMPANY_INFO.socialMedia).filter(Boolean)
-};
+// The business node (with its address) lives on the home page: MainLayout emits it on "/" only, so this page doesn't repeat it.
 
 const breadcrumbSchema = generateBreadcrumbSchema([
   { name: "Home", path: "/" },
   { name: "Contact", path: "/contact" }
 ]);
 
-const schemas = [localBusinessSchema, breadcrumbSchema];
+const schemas = [breadcrumbSchema];
 ---
 
 <MainLayout>
@@ -1814,20 +1765,21 @@ const schemas = [localBusinessSchema, breadcrumbSchema];
       <h2>Get in Touch</h2>
 
       <!-- CRITICAL: NAP must match COMPANY_INFO and LocalBusiness schema exactly -->
-      <div class="info-block">
-        <h3>📍 Office Location</h3>
-        <p>
-          <a
-            href={`https://maps.google.com/?q=${COMPANY_INFO.address.street}, ${COMPANY_INFO.address.city}`}
-            target="_blank"
-            rel="noopener"
-          >
-            {COMPANY_INFO.address.street}<br />
-            {COMPANY_INFO.address.city}, {COMPANY_INFO.address.region} {COMPANY_INFO.address.postalCode}<br />
-            {COMPANY_INFO.address.country}
-          </a>
-        </p>
-      </div>
+      {COMPANY_INFO.business.kind === "local" && (
+        <div class="info-block">
+          <h3>📍 Office Location</h3>
+          <p>
+            <a
+              href={`https://maps.google.com/?q=${COMPANY_INFO.business.address.street}, ${COMPANY_INFO.business.address.city}`}
+              target="_blank"
+              rel="noopener"
+            >
+              {COMPANY_INFO.business.address.street}<br />
+              {COMPANY_INFO.business.address.city}, {COMPANY_INFO.business.address.region} {COMPANY_INFO.business.address.postalCode}
+            </a>
+          </p>
+        </div>
+      )}
 
       <div class="info-block">
         <h3>📞 Phone</h3>
@@ -1886,9 +1838,9 @@ const schemas = [localBusinessSchema, breadcrumbSchema];
   <section class="map-section">
     <h2>Find Us</h2>
     <!-- Google Maps Embed -->
-    {COMPANY_INFO.geo && (
+    {COMPANY_INFO.business.kind === "local" && COMPANY_INFO.business.geo && (
       <iframe
-        src={`https://maps.google.com/maps?q=${COMPANY_INFO.geo.latitude},${COMPANY_INFO.geo.longitude}&z=15&output=embed`}
+        src={`https://maps.google.com/maps?q=${COMPANY_INFO.business.geo.latitude},${COMPANY_INFO.business.geo.longitude}&z=15&output=embed`}
         width="100%"
         height="450"
         style="border:0;"
@@ -1999,7 +1951,7 @@ Choose the most specific `@type` for your business:
 #### Homepage (`/`)
 
 - [ ] Uses `generatePageSEO()`
-- [ ] ORGANIZATION_SCHEMA and WEBSITE_SCHEMA emitted once (MainLayout adds them)
+- [ ] The home schemas (business node, `WebSite`, founders) emitted once (MainLayout adds them on `/` only)
 - [ ] Features all primary keywords in H1 and intro paragraph
 - [ ] Links to all main service pages
 - [ ] Includes company stats/social proof
@@ -2060,7 +2012,7 @@ Choose the most specific `@type` for your business:
 
 ### ✅ Schema Markup
 
-- [ ] **Homepage**: ORGANIZATION_SCHEMA + WEBSITE_SCHEMA
+- [ ] **Homepage**: the home schemas that `MainLayout` emits on `/` (business node + `WebSite` + founders)
 - [ ] **Service Pages**: Service Schema + Breadcrumb Schema (+ FAQ Schema only with a visible FAQ section)
 - [ ] **About Page**: Person Schema (founder) + Breadcrumb Schema
 - [ ] **Contact Page**: LocalBusiness Schema + Breadcrumb Schema
@@ -2342,7 +2294,7 @@ Verify in `robots.txt` that these user-agents are allowed:
 
    <!-- ✅ CORRECT -->
    ---
-   import { COMPANY_INFO } from "@/config/seo";
+   import { COMPANY_INFO } from "@/config/companyInfo";
    ---
    <p>Teléfono: {COMPANY_INFO.phone}</p>
    ```
@@ -2582,19 +2534,7 @@ Use these patterns when the project targets multiple languages or countries. If 
 - URLs must be absolute (include `https://`)
 - Must also be included in the XML sitemap
 
-**Astro implementation** — use `generateSEOWithAlternates()` from `src/config/seo.ts`:
-
-```typescript
-const seoProps = generateSEOWithAlternates({
-  title: "...",
-  canonical: "/page",
-  alternates: [
-    { hreflang: "en", href: "https://example.com/page" },
-    { hreflang: "es", href: "https://example.com/es/page" },
-    { hreflang: "x-default", href: "https://example.com/page" },
-  ]
-});
-```
+**Astro implementation** — the scaffold has no hreflang helper: hreflang is out of its scope until an i18n migration adds it.
 
 **NAP (Name, Address, Phone) per locale** — if serving different regions with different contact info, each locale must have its own `LocalBusiness` schema with region-specific NAP data. Inconsistent NAP across locales hurts local rankings in each market.
 
@@ -2608,7 +2548,7 @@ const seoProps = generateSEOWithAlternates({
 2. **Import necessary functions**:
    ```typescript
    import { generatePageSEO, generate[Type]Schema, generateBreadcrumbSchema } from "@/config/seo";
-   import { COMPANY_INFO } from "@/config/seo";
+   import { COMPANY_INFO } from "@/config/companyInfo";
    ```
 3. **Generate SEO props**:
    ```typescript
@@ -2623,7 +2563,7 @@ const seoProps = generateSEOWithAlternates({
    - Service page: Service + Breadcrumb (+ FAQ only with a visible FAQ section)
    - About page: Person + Breadcrumb
    - Contact page: LocalBusiness + Breadcrumb
-   - Every page: Organization + Website (added by MainLayout)
+   - Homepage only: the business node + `WebSite` + founders (the home schemas that MainLayout emits on `/`; don't add them)
 5. **Structure content**:
    - H1 (only one)
    - Direct answer (first 50-100 words)

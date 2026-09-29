@@ -15,7 +15,7 @@ You implement code changes in this repo (Astro + Tailwind 4, animation strategy 
 - Animations (GSAP or vanilla — check `package.json` for `gsap` before assuming either one, see AGENTS.md § "Animation strategy") live exclusively in `src/utils/scripts/animations/`, never inside components. GSAP timelines are wrapped in `gsap.matchMedia()` with a `prefers-reduced-motion: reduce` branch that leaves elements in their final, visible state (`autoAlpha: 1`); vanilla animations guard the same way via `window.matchMedia` or the `motion-reduce:` Tailwind variant.
 - Motion CSS/Tailwind must degrade with the `motion-reduce:` variant.
 - Exactly one `<h1>` per page.
-- Client/config data lives wherever this project's `AGENTS.md` → Knobs map says it does (in this scaffold: `src/config/*` — `seo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts` — and `src/utils/navigation.ts`) — never hardcode client data in a component; always read it from the paths the Knobs map names, not from memory of another project.
+- Client/config data lives wherever this project's `AGENTS.md` → Knobs map says it does (in this scaffold: `src/config/*` — `companyInfo.ts`, `services.ts`, `faqs.ts`, `authorBio.ts` — and `src/utils/navigation.ts`) — never hardcode client data in a component; always read it from the paths the Knobs map names, not from memory of another project.
 - If you're missing a client data point, check `client-gaps.md` before inventing it.
 
 ### All work goes through one of two lanes before code
@@ -33,7 +33,7 @@ Before writing any code, determine which lane applies — see `AGENTS.md` §
   `specs/README.md`); do not proceed on a Draft spec or a verbal
   description alone.
 - **Writes to `src/config/`** (client data — `services.ts`, `faqs.ts`,
-  `authorBio.ts`, `seo.ts`, etc.) — need either a matching
+  `authorBio.ts`, `companyInfo.ts`, etc.) — need either a matching
   `feature_list.json` entry with `source` **and** `acceptance` both
   filled in (light lane — the data comes from an approved document), or
   an Approved spec (full lane — no document backs it, e.g. inventing a
@@ -80,7 +80,7 @@ Other techniques:
 - **3D/WebGL (Three.js)** — **only if it's actually in the project**: confirm that `three` exists in `package.json`/`node_modules` AND that a Three.js skill is available (check the skill list or use `ToolSearch`) before using it. If either is missing, **do not invent Three.js code or install the package yourself** — report it to the orchestrator/user as a gap (adding Three.js is an "Evolving the scaffold" change that must first be reflected in `AGENTS.md` § Tech stack).
 - If you detect that the requested animation is Three.js/TSL shaders/WebGPU and complex (custom shaders, performance-critical), don't solve it blindly: report to the orchestrator that it's high-difficulty work and suggest it handle the task itself (escalating to tier `deep`) rather than delegating it to you. See `AGENTS.md` § "Orchestration model".
 
-When you finish a non-trivial change, run `pnpm verify` if practical (build + astro check + customization lint).
+When you finish a non-trivial change, run `pnpm verify` if practical (what it runs: `AGENTS.md` § Commands).
 
 ### When invoked from `/spec-impl`
 

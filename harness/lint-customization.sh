@@ -22,7 +22,7 @@ found=0
 marker() {
   local pattern="$1" desc="$2"
   local hits
-  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' -E "$pattern" "$ROOT/src" "$ROOT/astro.config.mjs" 2>/dev/null || true)"
+  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' --include='*.md' -E "$pattern" "$ROOT/src" "$ROOT/astro.config.mjs" 2>/dev/null || true)"
   if [ -n "$hits" ]; then
     found=$((found + 1))
     echo "  ⚠ $desc"
@@ -36,7 +36,7 @@ marker() {
 marker_src_except() {
   local pattern="$1" desc="$2" skip="$ROOT/$3:"
   local hits
-  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' -E "$pattern" "$SRC" 2>/dev/null \
+  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' --include='*.md' -E "$pattern" "$SRC" 2>/dev/null \
     | awk -v skip="$skip" 'index($0, skip) != 1' || true)"
   if [ -n "$hits" ]; then
     found=$((found + 1))
@@ -47,14 +47,13 @@ marker_src_except() {
 
 echo "Scanning src/ for un-customized scaffold markers…"
 
-marker 'lang="en"'                 'lang still "en" (set the client locale in MainLayout)'
 marker 'example\.com'              'placeholder site URL example.com (set per client / provisioning script)'
 marker 'Nueva web app'             'placeholder hero copy "Nueva web app"'
 marker 'My Website|My Site'        'placeholder English SEO title/description'
 marker '>[Ff]ooter<'               'Footer stub'
 marker '\[CLIENTE\]' 'client data placeholder [CLIENTE] (fill from the brief / client-gaps.md)'
 marker 'tuagencia|Tu Agencia|\bShine\b|shine_?agencia|Nombre Fundador|Calle Principal|María González|Carlos Rodríguez|300-000-0000|573000000000' 'scaffold contamination (Shine data / old placeholders)'
-marker_src_except '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' 'hand-written email address (put it in COMPANY_INFO.email in src/config/seo.ts)' 'src/config/seo.ts'
+marker_src_except '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' 'hand-written email address (put it in COMPANY_INFO.email in src/config/companyInfo.ts)' 'src/config/companyInfo.ts'
 
 echo ""
 if [ "$found" -eq 0 ]; then
