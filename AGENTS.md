@@ -455,8 +455,9 @@ is built by hand in the client repo, and it must follow these rules:
 The scaffold ships no optional modules by default — `setup-astro-harness.sh`
 (run via the `new-customer` shell function) strips `harness/modules/` from
 every clone, same as it drops `.git`. Modules live in `harness/modules/<name>/` in **this** repo, ready for a client to opt
-into once its brief actually needs one (the blog module is the first, see
-`specs/09-blog-module.md`).
+into once its brief actually needs one (the blog module is the first; its
+design record is `specs/09-blog-module.md`, which exists only in the scaffold
+repo — the same script deletes the scaffold's numbered specs from every clone).
 
 A client gets a module by running `~/scripts/add-module.sh <name>
 <path-to-client-project>` — it copies the module's files into the client's

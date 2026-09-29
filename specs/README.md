@@ -106,9 +106,13 @@ Both lanes converge on the same chain from step 3 onward:
   lane, not here — that split is what keeps this folder from becoming a
   task list.
 
-> This folder ships with only `TEMPLATE.md` in the scaffold — the first
-> real spec is written the first time someone needs the full lane: a
-> change with no document already answering it.
+> In the scaffold repo this folder also holds the scaffold's own specs
+> (`01-`, `02-`, …) as a record of how it was built. They are **not** copied
+> to clients: `setup-astro-harness.sh` deletes every numbered spec after the
+> clone, and `install-harness.sh` never copies them. A client's `specs/`
+> starts with only `README.md`, `TEMPLATE.md` and `.spec-config.yml`; its
+> first real spec is written the first time someone needs the full lane — a
+> change with no document already answering it — and is numbered `01-`.
 
 The only overlap between the two lanes is "is this done?" (`status: done`
 vs. `- [x]`), and never over the same object — a feature carries no spec,
