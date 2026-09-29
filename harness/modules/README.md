@@ -3,7 +3,7 @@
 A **module** is a self-contained bundle of files a client project can opt
 into after it needs them — starting with the planned blog module (spec 09).
 Nothing under `harness/modules/` ships to a client by default:
-`setup-client-project.sh` strips the whole directory on every clone. A
+`setup-astro-harness.sh` strips the whole directory on every clone. A
 client gets a module only when someone runs
 `~/scripts/add-module.sh <name> <path-to-client-project>`, which copies the
 module's files into the target and patches the core's marked extension

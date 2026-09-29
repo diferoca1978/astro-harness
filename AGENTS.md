@@ -452,9 +452,9 @@ is built by hand in the client repo, and it must follow these rules:
 
 ### Modules — installed on demand with `add-module`
 
-The scaffold ships no optional modules by default — `setup-client-project.sh`
-strips `harness/modules/` from every clone, same as it drops `.git`. Modules
-live in `harness/modules/<name>/` in **this** repo, ready for a client to opt
+The scaffold ships no optional modules by default — `setup-astro-harness.sh`
+(run via the `new-customer` shell function) strips `harness/modules/` from
+every clone, same as it drops `.git`. Modules live in `harness/modules/<name>/` in **this** repo, ready for a client to opt
 into once its brief actually needs one (the blog module is the first, see
 `specs/09-blog-module.md`).
 
