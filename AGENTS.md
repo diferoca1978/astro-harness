@@ -148,7 +148,7 @@ The whole point of the scaffold is this boundary.
 | `lang` / locale                                | `src/config/companyInfo.ts` → `LOCALE` (`<html lang>`, `og:locale` and `inLanguage` derive from it)                                                                                           | Default `es-CO`                            |
 | Pages                                          | `src/pages/*.astro`                                                                                                                                                                            | Brief (§ sitemap)                          |
 | Model per role (subagent tier→model)           | `harness/runtimes/*.json` (`tiers` map, per runtime) · `agents/*.md` (`tier:` field, never a raw model string)                                                                                | Scaffold-level, not per-client — see `harness/README.md` |
-| Modules (e.g. a future blog)                   | `harness/modules/<name>/` (source, in this repo) · installed into a client via `~/scripts/add-module.sh` → files land in their normal `src/` location, tracked in the client's `MODULES.md` | `harness/modules/README.md`; run manually only when a client's brief needs the module |
+| Modules                                        | `harness/modules/<name>/` (source, in this repo) · installed into a client via `~/scripts/add-module.sh` → files land in their normal `src/` location, tracked in the client's `MODULES.md` | `harness/modules/README.md`; run manually only when a client's brief needs the module |
 
 > **Colors** live **only** in `global.css` because Tailwind 4 reads them there
 > to generate utilities. Never mirror colors into a `.ts` file — that creates
@@ -455,8 +455,8 @@ is built by hand in the client repo, and it must follow these rules:
 The scaffold ships no optional modules by default — `setup-client-project.sh`
 strips `harness/modules/` from every clone, same as it drops `.git`. Modules
 live in `harness/modules/<name>/` in **this** repo, ready for a client to opt
-into once its brief actually needs one (the planned blog module is the first,
-see `specs/09-*`).
+into once its brief actually needs one (the blog module is the first, see
+`specs/09-blog-module.md`).
 
 A client gets a module by running `~/scripts/add-module.sh <name>
 <path-to-client-project>` — it copies the module's files into the client's

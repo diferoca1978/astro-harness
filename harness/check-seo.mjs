@@ -113,8 +113,11 @@
 // page <loc> in the sitemaps (those findings are listed under the sitemap
 // file). Same-site means the origin's hostname, ignoring the scheme and a
 // leading "www."; any other URL is external. A same-site URL is a page if its
-// path has no extension or ends in .html, and an asset otherwise. Each rule
-// reports a URL once per page, listing every place it appears.
+// path has no extension or ends in .html, and an asset otherwise, except a
+// Netlify Image CDN URL (/.netlify/images?url=<path>&w=…, what
+// @astrojs/netlify makes of an <Image>): always an asset, which --dist looks
+// for as the file <path> names and --url requests as is. Each rule reports a
+// URL once per page, listing every place it appears.
 //
 // Limits:
 //   - It cannot tell whether the data is true.
@@ -249,6 +252,25 @@ function urlKind(pathname) {
   const last = pathname.slice(pathname.lastIndexOf("/") + 1);
   const ext = path.posix.extname(last).toLowerCase();
   return ext === "" || ext === ".html" ? "page" : "asset";
+}
+
+/**
+ * The asset a Netlify Image CDN URL serves: the value of its url= query
+ * parameter (query-decoded, e.g. _astro/photo.a1b2c3.webp), or null for any
+ * other URL. @astrojs/netlify's image service rewrites an <Image> to
+ * /.netlify/images?url=<path>&w=…&h=…, a pathname with no extension that
+ * urlKind() alone would read as a page. Only that exact pathname with a
+ * non-empty url= matches.
+ */
+function netlifyImageSource(url) {
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  if (u.pathname !== "/.netlify/images") return null;
+  return u.searchParams.get("url") || null;
 }
 
 const NAMED_ENTITIES = {
@@ -821,7 +843,10 @@ function distinctUrls(occurrences) {
 }
 
 const describe = (u) => `${u.raw} (${u.where})`;
-const pathKind = (url) => urlKind(new URL(url).pathname);
+
+/** urlKind() of an absolute URL's pathname; a Netlify Image CDN URL is always an asset. */
+const pathKind = (url) =>
+  netlifyImageSource(url) !== null ? "asset" : urlKind(new URL(url).pathname);
 
 const MARKDOWN_LINK = /\[[^\]]*\]\(([^)\s]+)\)/g;
 
@@ -1494,11 +1519,13 @@ function ownUrl(rel, origin) {
 }
 
 /**
- * Resolves a same-site URL against the build (only its pathname is used):
+ * Resolves a same-site URL against the build (only its pathname is used,
+ * except for a Netlify Image CDN URL):
  *   ends in "/"    → <dir><path>index.html
  *   ends in .html  → that file
  *   no extension   → <dir><path>/index.html, then <dir><path>.html
  *   any other ext. → that file (an asset)
+ *   /.netlify/images?url=<path> → <dir>/<path> (an asset; see netlifyImageSource)
  * The lookup is case-sensitive on every file system (a Set of real names).
  */
 function resolveInDist(url, files, pagesByFile) {
@@ -1515,6 +1542,8 @@ function resolveInDist(url, files, pagesByFile) {
       reason: "not a valid URL",
     };
   }
+  const source = netlifyImageSource(url);
+  if (source !== null) return resolveNetlifyImageInDist(source, files);
   let pathname;
   try {
     pathname = decodeURIComponent(encoded);
@@ -1554,6 +1583,38 @@ function resolveInDist(url, files, pagesByFile) {
     inPageSet: false,
     target: null,
     reason: `no file ${rels.join(" or ")}`,
+  };
+}
+
+/**
+ * resolveInDist() for a Netlify Image CDN URL, given its url= value: always an
+ * asset, the file that value names. It is a URL path, so it is percent-decoded
+ * like any other; its leading "/" is optional (@astrojs/netlify drops it for an
+ * imported image, e.g. _astro/photo.a1b2c3.webp).
+ */
+function resolveNetlifyImageInDist(source, files) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(source);
+  } catch {
+    return {
+      exists: false,
+      kind: "asset",
+      page: null,
+      inPageSet: false,
+      target: null,
+      reason: "malformed percent-encoding in its url= parameter",
+    };
+  }
+  const rel = decoded.replace(/^\/+/, "");
+  const exists = files.has(rel);
+  return {
+    exists,
+    kind: "asset",
+    page: null,
+    inPageSet: false,
+    target: exists ? rel : null,
+    reason: exists ? null : `no file ${rel} (its url= parameter)`,
   };
 }
 

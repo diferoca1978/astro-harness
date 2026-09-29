@@ -16,7 +16,8 @@ pnpm-debug.log*
 # environment variables
 .env
 
-# Claude
+# Docs
+guia-de-uso.md
 
 
 

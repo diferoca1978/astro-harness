@@ -1,0 +1,59 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import JsonLd from "@/components/JsonLd.astro";
+import PostCard from "@/components/perpage/blog/PostCard.astro";
+import { COMPANY_INFO } from "@/config/companyInfo";
+import { generatePageSEO, generateBreadcrumbSchema } from "@/config/seo";
+import { generateBlogSchema } from "@/config/blogSeo";
+import { getAllPosts } from "@/utils/posts";
+
+const posts = await getAllPosts();
+
+// The intro shown under the <h1> doubles as the meta description.
+const description = `Todos los artículos de ${COMPANY_INFO.name}, del más reciente al más antiguo.`;
+
+const seoProps = generatePageSEO({ title: "Blog", description });
+
+const breadcrumbSchema = generateBreadcrumbSchema([
+  { name: "Inicio", path: "/" },
+  { name: "Blog", path: "/blog/" },
+]);
+---
+
+<MainLayout seoProps={seoProps} schemas={[breadcrumbSchema]}>
+  <section class="bg-soft-beige px-4 py-20 md:py-28">
+    <div class="mx-auto max-w-6xl">
+      <header class="max-w-2xl">
+        <span
+          aria-hidden="true"
+          class="mb-8 block h-1 w-12 rounded-full bg-olive"
+        ></span>
+        <h1 class="text-4xl font-bold tracking-tight text-balance text-purple-dark md:text-6xl">
+          Blog
+        </h1>
+        <p class="mt-5 text-lg text-pretty text-purple-accent md:text-xl">
+          {description}
+        </p>
+      </header>
+
+      {posts.length > 0 ? (
+        <ul
+          role="list"
+          class="mt-14 grid gap-8 sm:grid-cols-2 md:mt-20 lg:grid-cols-3"
+        >
+          {posts.map((post) => (
+            <li>
+              <PostCard post={post} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-14 text-lg text-purple-accent md:mt-20">
+          Todavía no hay artículos publicados.
+        </p>
+      )}
+
+      <JsonLd schema={generateBlogSchema(posts)} />
+    </div>
+  </section>
+</MainLayout>

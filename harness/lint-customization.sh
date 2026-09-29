@@ -22,7 +22,7 @@ found=0
 marker() {
   local pattern="$1" desc="$2"
   local hits
-  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' -E "$pattern" "$ROOT/src" "$ROOT/astro.config.mjs" 2>/dev/null || true)"
+  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' --include='*.md' -E "$pattern" "$ROOT/src" "$ROOT/astro.config.mjs" 2>/dev/null || true)"
   if [ -n "$hits" ]; then
     found=$((found + 1))
     echo "  ⚠ $desc"
@@ -36,7 +36,7 @@ marker() {
 marker_src_except() {
   local pattern="$1" desc="$2" skip="$ROOT/$3:"
   local hits
-  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' -E "$pattern" "$SRC" 2>/dev/null \
+  hits="$(grep -rIn --include='*.astro' --include='*.ts' --include='*.css' --include='*.mjs' --include='*.md' -E "$pattern" "$SRC" 2>/dev/null \
     | awk -v skip="$skip" 'index($0, skip) != 1' || true)"
   if [ -n "$hits" ]; then
     found=$((found + 1))
